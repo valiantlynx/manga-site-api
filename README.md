@@ -5,32 +5,32 @@ this is their structure:
 ```javascript
 manga:
 {
-    "id": "",
-    "title":  "",
-    "img":  "",
-    "image": "",
-    "tags":  [],
-    "latestChapter":  0,
-    "src":  "",
-    "description": "",
-    "author": "",
+    "id": "string",
+    "title":  "string",
+    "img":  "url",
+    "image": "string",
+    "tags": " string",
+    "latestChapter":  "number",
+    "src":  "url",
+    "description": "string",
+    "author": "string",
 }
 
 chapters:
 {
-    mangaId:  "",
-    src:  "",
-    title: "",
+    mangaId:  "string",
+    src:  "url",
+    title: "string",
 }
 
 images:
 {
-    pageNumber: "",
-    img: "",
-    chapterId:"",
-    totalPages: "",
-    chapterText:  "",
-    image: "",
+    pageNumber: "number",
+    img: "url",
+    chapterId:"string",
+    totalPages: "number",
+    chapterText:  "string",
+    image: "string",
 }
 ```
 
