@@ -43,11 +43,11 @@ async function idAlreadyExistsInDatabase(id) {
 
 async function run() {
     let browser;
-    const pageNumber = 2;
+    const pageNumber = 1;
     // const endpoint = 'wss://chrome.browserless.io?token=7fc44ee7-19d6-4da4-9bde-5b445b58414c';
 
     // loop through the pages and get the manga list from each page starting from page pageNumber to the last page, the last page is unknown
-    for (let i = pageNumber; i <= 2550; i++) {
+    for (let i = pageNumber; i <= 2553; i++) {
 
         console.log("currently on page", i);
 
@@ -328,8 +328,8 @@ async function createMangaRecord(data) {
         const response = await axios.post('http://localhost:8080/api/collections/manga/records', {
             "id": id ? id : "",
             "title": data.title ? data.title : "",
-            "img": base64Image ? `data:image/jpeg;base64,${base64Image}` : "",
-            "image": data.img ? data.img : "",
+            "image": base64Image ? `data:image/jpeg;base64,${base64Image}` : "",
+            "img": data.img ? data.img : "",
             "tags": data.tags ? data.tags : [],
             "latestChapter": data.latestChapter ? data.latestChapter : 0,
             "src": data.src ? data.src : "",
