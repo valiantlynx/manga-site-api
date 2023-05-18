@@ -144,50 +144,55 @@ app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
   let id = req.params.id;
   let titleid = req.params.titleid;
   let chapterid = req.params.chapterid;
-  console.log("recieved dta:",id, titleid, chapterid);
+  console.log("recieved dta:", id, titleid, chapterid);
   try {
-      url = `${baseURL}comic/${id}/${titleid}/${chapterid}`;
+    url = `${baseURL}comic/${id}/${titleid}/${chapterid}`;
 
-      console.log("Navigating to: ", url);
-      const browser = await puppeteer.launch({ headless: "new" });
-      const page = await browser.newPage();
-      await page.setDefaultNavigationTimeout(2 * 60 * 1000);
+    console.log("Navigating to: ", url);
+    const endpoint = 'wss://chrome.browserless.io?token=7fc44ee7-19d6-4da4-9bde-5b445b58414c';
+
+    const browser = await puppeteer.connect({
+      browserWSEndpoint: endpoint,
+    });
+    
+    const page = await browser.newPage();
+    await page.setDefaultNavigationTimeout(2 * 60 * 1000);
 
 
-      await page.goto(url);
+    await page.goto(url);
 
-      await page.click('.ms-1')
+    await page.click('.ms-1')
 
-      const elements = Array.from(await page.$$("#viewer .item"));
-      const data = await Promise.all(
-          elements.map(async (imageBody) => {
-              const content = await imageBody.evaluate((e) => {
-                  const imgElement = e.querySelector('img');
-                  const pageElement = e.querySelector('.page-num');
+    const elements = Array.from(await page.$$("#viewer .item"));
+    const data = await Promise.all(
+      elements.map(async (imageBody) => {
+        const content = await imageBody.evaluate((e) => {
+          const imgElement = e.querySelector('img');
+          const pageElement = e.querySelector('.page-num');
 
-                  const imageUrl = imgElement ? imgElement.src : null;
-                  const chapterText = pageElement ? pageElement.innerText : null;
-                  const pageNumber = pageElement ? Number(pageElement.innerText.split(' / ')[0]) : null;
-                  const totalPages = pageElement ? Number(pageElement.innerText.split(' / ')[1]) : null;
+          const imageUrl = imgElement ? imgElement.src : null;
+          const chapterText = pageElement ? pageElement.innerText : null;
+          const pageNumber = pageElement ? Number(pageElement.innerText.split(' / ')[0]) : null;
+          const totalPages = pageElement ? Number(pageElement.innerText.split(' / ')[1]) : null;
 
-                  return {
-                      imageUrl,
-                      pageNumber,
-                      totalPages,
-                      chapterText,
-                  };
-              });
+          return {
+            imageUrl,
+            pageNumber,
+            totalPages,
+            chapterText,
+          };
+        });
 
-              return content;
-          })
-      );
+        return content;
+      })
+    );
 
-      await browser.close();
+    await browser.close();
 
-      res.json({ images: data });
+    res.json({ images: data });
   } catch (error) {
-      console.error('Scraping failed', error);
-      res.status(500).send('Scraping failed');
+    console.error('Scraping failed', error);
+    res.status(500).send('Scraping failed');
   }
 });
 

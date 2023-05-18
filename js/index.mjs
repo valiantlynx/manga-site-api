@@ -2,10 +2,12 @@ import puppeteer from "puppeteer"; // 'puppeteer' if not using browserless and '
 // import { downloadChapter } from "./downloadChapter";
 // import { downloadManga } from "./downloadManga";
 
-import PocketBase from "pocketbase";
-import fetch from "node-fetch";
-import fs from "fs";
+// import PocketBase from "pocketbase";
+// import fetch from "node-fetch";
+// import fs from "fs";
 import axios from "axios";
+
+
 
 async function generateId() {
     let id = '';
@@ -64,7 +66,7 @@ async function run() {
             // 'false' makes the browser visible and it does not look like a robot, 
             // 'true' makes the browser invisible and it looks like a robot
             // 'new' makes the browser invisible and it does not look like a robot,
-            browser = await puppeteer.launch({ headless: "new" });
+            browser = await puppeteer.launch({ headless: "false" });
 
             const page = await browser.newPage();
             await page.setDefaultNavigationTimeout(2 * 60 * 1000);
@@ -205,105 +207,105 @@ async function run() {
 
 }
 
-async function downloadManga(data) {
+// async function downloadManga(data) {
 
-    // create the mangas folder if it does not exist and create the manga folder if it does not exist
-    if (!fs.existsSync("./mangas")) {
-        console.log("No mangas folder found. Creating mangas folder...");
-        fs.mkdirSync("./mangas");
-        if (!fs.existsSync(`./mangas/${data.title}`)) {
-            console.log(`No manga folder found for ${data.title}. Creating manga folder...`);
-            fs.mkdirSync(`./mangas/${data.title}`);
-        }
-    }
+//     // create the mangas folder if it does not exist and create the manga folder if it does not exist
+//     if (!fs.existsSync("./mangas")) {
+//         console.log("No mangas folder found. Creating mangas folder...");
+//         fs.mkdirSync("./mangas");
+//         if (!fs.existsSync(`./mangas/${data.title}`)) {
+//             console.log(`No manga folder found for ${data.title}. Creating manga folder...`);
+//             fs.mkdirSync(`./mangas/${data.title}`);
+//         }
+//     }
 
-    try {
+//     try {
 
-        // download the imaage and save it to the chapter folder as the manga profile image
-        let fileName = `./mangas/${data.title}/profile.jpg`;
+//         // download the imaage and save it to the chapter folder as the manga profile image
+//         let fileName = `./mangas/${data.title}/profile.jpg`;
 
-        // check if the file already exists
-        if (fs.existsSync(fileName)) {
-            // read the existing file and check if it's the same
-            const existingFile = fs.readFileSync(fileName);
-            const newFile = await fetch(data.img).then((res) => res.buffer());
-            if (existingFile.equals(newFile)) {
-                console.log(`Skipped ${fileName}`);
-            } else {
-                // add a number to the file name if it already exists but is not the same
-                let i = 1;
-                while (fs.existsSync(`./mangas/${data.title}/profile-${i}.jpg`)) {
-                    i++;
-                }
-                fileName = `./mangas/${data.title}/profile-${i}.jpg`;
-            }
-        }
-        // download the file and save it
-        const response = await fetch(data.img);
-        const buffer = await response.buffer();
-        fs.writeFileSync(fileName, buffer);
-        console.log(`Downloaded ${fileName}`);
+//         // check if the file already exists
+//         if (fs.existsSync(fileName)) {
+//             // read the existing file and check if it's the same
+//             const existingFile = fs.readFileSync(fileName);
+//             const newFile = await fetch(data.img).then((res) => res.buffer());
+//             if (existingFile.equals(newFile)) {
+//                 console.log(`Skipped ${fileName}`);
+//             } else {
+//                 // add a number to the file name if it already exists but is not the same
+//                 let i = 1;
+//                 while (fs.existsSync(`./mangas/${data.title}/profile-${i}.jpg`)) {
+//                     i++;
+//                 }
+//                 fileName = `./mangas/${data.title}/profile-${i}.jpg`;
+//             }
+//         }
+//         // download the file and save it
+//         const response = await fetch(data.img);
+//         const buffer = await response.buffer();
+//         fs.writeFileSync(fileName, buffer);
+//         console.log(`Downloaded ${fileName}`);
 
-    }
-    catch (e) {
-        console.log("download failed", e, e.message);
-    }
-}
+//     }
+//     catch (e) {
+//         console.log("download failed", e, e.message);
+//     }
+// }
 
-async function downloadChapter(chapter, manga, data) {
+// async function downloadChapter(chapter, manga, data) {
 
-    // create the mangas folder if it does not exist and create the manga folder if it does not exist and create the chapter folder if it does not exist
-    if (!fs.existsSync("./mangas")) {
-        console.log("No mangas folder found. Creating mangas folder...");
-        fs.mkdirSync("./mangas");
-        console.log(`Created mangas folder. Creating manga folder...`);
+//     // create the mangas folder if it does not exist and create the manga folder if it does not exist and create the chapter folder if it does not exist
+//     if (!fs.existsSync("./mangas")) {
+//         console.log("No mangas folder found. Creating mangas folder...");
+//         fs.mkdirSync("./mangas");
+//         console.log(`Created mangas folder. Creating manga folder...`);
 
-    }
-    if (!fs.existsSync(`./mangas/${manga.title}`)) {
-        console.log(`No manga folder found for ${manga.title}. Creating manga folder...`);
-        fs.mkdirSync(`./mangas/${manga.title}`);
-        console.log(`Created manga folder for ${manga.title}. Creating chapter folder...`);
+//     }
+//     if (!fs.existsSync(`./mangas/${manga.title}`)) {
+//         console.log(`No manga folder found for ${manga.title}. Creating manga folder...`);
+//         fs.mkdirSync(`./mangas/${manga.title}`);
+//         console.log(`Created manga folder for ${manga.title}. Creating chapter folder...`);
 
-    }
-    if (!fs.existsSync(`./mangas/${manga.title}/${chapter.chapterTitle}`)) {
-        console.log(`No chapter folder found for ${chapter.chapterTitle}. Creating chapter folder...`);
-        fs.mkdirSync(`./mangas/${manga.title}/${chapter.chapterTitle}`);
+//     }
+//     if (!fs.existsSync(`./mangas/${manga.title}/${chapter.chapterTitle}`)) {
+//         console.log(`No chapter folder found for ${chapter.chapterTitle}. Creating chapter folder...`);
+//         fs.mkdirSync(`./mangas/${manga.title}/${chapter.chapterTitle}`);
 
-    }
+//     }
 
-    try {
-        // loop through the data and download each image and save it to the chapter folder with the page number as the file name
-        for (const image of data) {
-            let fileName = `./mangas/${manga.title}/${chapter.chapterTitle}/${image.pageNumber}.jpg`;
+//     try {
+//         // loop through the data and download each image and save it to the chapter folder with the page number as the file name
+//         for (const image of data) {
+//             let fileName = `./mangas/${manga.title}/${chapter.chapterTitle}/${image.pageNumber}.jpg`;
 
-            // check if the file already exists
-            if (fs.existsSync(fileName)) {
-                // read the existing file and check if it's the same
-                const existingFile = fs.readFileSync(fileName);
-                const newFile = await fetch(image.imageUrl).then((res) => res.buffer());
-                if (existingFile.equals(newFile)) {
-                    console.log(`Skipped ${fileName}`);
-                } else {
-                    // add a number to the file name if it already exists but is not the same
-                    let i = 1;
-                    while (fs.existsSync(`./mangas/${manga.title}/${chapter.chapterTitle}/${image.pageNumber}-${i}.jpg`)) {
-                        i++;
-                    }
-                    fileName = `./mangas/${manga.title}/${chapter.chapterTitle}/${image.pageNumber}-${i}.jpg`;
-                }
-            }
-            // download the file and save it
-            const response = await fetch(image.imageUrl);
-            const buffer = await response.buffer();
-            fs.writeFileSync(fileName, buffer);
-            console.log(`Downloaded ${fileName}`);
-        }
+//             // check if the file already exists
+//             if (fs.existsSync(fileName)) {
+//                 // read the existing file and check if it's the same
+//                 const existingFile = fs.readFileSync(fileName);
+//                 const newFile = await fetch(image.imageUrl).then((res) => res.buffer());
+//                 if (existingFile.equals(newFile)) {
+//                     console.log(`Skipped ${fileName}`);
+//                 } else {
+//                     // add a number to the file name if it already exists but is not the same
+//                     let i = 1;
+//                     while (fs.existsSync(`./mangas/${manga.title}/${chapter.chapterTitle}/${image.pageNumber}-${i}.jpg`)) {
+//                         i++;
+//                     }
+//                     fileName = `./mangas/${manga.title}/${chapter.chapterTitle}/${image.pageNumber}-${i}.jpg`;
+//                 }
+//             }
+//             // download the file and save it
+//             const response = await fetch(image.imageUrl);
+//             const buffer = await response.buffer();
+//             fs.writeFileSync(fileName, buffer);
+//             console.log(`Downloaded ${fileName}`);
+//         }
 
-    }
-    catch (e) {
-        console.log("download failed", e, e.message);
-    }
-}
+//     }
+//     catch (e) {
+//         console.log("download failed", e, e.message);
+//     }
+// }
 
 
 async function createMangaRecord(data) {
@@ -319,16 +321,16 @@ async function createMangaRecord(data) {
             return checkExistance.data.items[0].id;
         }
 
-        // Convert image data to base64
-        const imageResponse = await axios.get(data.img, {
-            responseType: 'arraybuffer'
-        });
-        const base64Image = Buffer.from(imageResponse.data, 'binary').toString('base64');
+        // // Convert image data to base64
+        // const imageResponse = await axios.get(data.img, {
+        //     responseType: 'arraybuffer'
+        // });
+        // const base64Image = Buffer.from(imageResponse.data, 'binary').toString('base64');
 
         const response = await axios.post('http://localhost:8080/api/collections/manga/records', {
             "id": id ? id : "",
             "title": data.title ? data.title : "",
-            "image": base64Image ? `data:image/jpeg;base64,${base64Image}` : "",
+         
             "img": data.img ? data.img : "",
             "tags": data.tags ? data.tags : [],
             "latestChapter": data.latestChapter ? data.latestChapter : 0,
@@ -367,11 +369,11 @@ async function uploadChapter(chapter, mangaId, data) {
 
         // loop through the data and upload each image to the chapter record
         for (const image of data) {
-            // Convert image data to base64
-            const imageDownload = await axios.get(image.imageUrl, {
-                responseType: 'arraybuffer'
-            });
-            const base64Image = Buffer.from(imageDownload.data, 'binary').toString('base64');
+            // // Convert image data to base64
+            // const imageDownload = await axios.get(image.imageUrl, {
+            //     responseType: 'arraybuffer'
+            // });
+            // const base64Image = Buffer.from(imageDownload.data, 'binary').toString('base64');
 
             const imageData = {
                 pageNumber: image.pageNumber ? image.pageNumber : "",
@@ -379,7 +381,7 @@ async function uploadChapter(chapter, mangaId, data) {
                 chapterId: response.data.id ? response.data.id : "",
                 totalPages: image.totalPages ? image.totalPages : "",
                 chapterText: image.chapterText ? image.chapterText : "",
-                image: base64Image ? `data:image/jpeg;base64,${base64Image}` : "",
+           
             };
 
             // check if the image record already exists

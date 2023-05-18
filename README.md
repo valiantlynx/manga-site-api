@@ -8,7 +8,7 @@ manga:
     "id": "string",
     "title":  "string",
     "img":  "url",
-    "image": "string",
+   
     "tags": " string",
     "latestChapter":  "number",
     "src":  "url",
@@ -30,7 +30,7 @@ images:
     chapterId:"string",
     totalPages: "number",
     chapterText:  "string",
-    image: "string",
+   
 }
 ```
 
