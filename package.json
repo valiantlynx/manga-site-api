@@ -2,10 +2,9 @@
   "name": "pocketbase-upload-maga",
   "version": "1.0.0",
   "description": "",
-  "main": "index.mjs",
-  "type": "commonjs",
+  "main": "api/index.js",
   "scripts": {
-    "start": "node index.mjs",
+    "start": "nodemon api",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,12 +12,19 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^1.4.0",
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
     "ipfs": "^0.66.0",
     "ipfs-core": "^0.18.0",
     "ipfs-http-client": "^60.0.0",
     "it-all": "^3.0.1",
+    "nodemon": "^2.0.22",
     "pocketbase": "^0.14.3",
     "puppeteer": "^19.11.1",
-    "uint8arrays": "^4.0.3"
+    "request": "^2.88.2",
+    "uint8arrays": "^4.0.3",
+    "uuid": "^9.0.0"
   }
 }
