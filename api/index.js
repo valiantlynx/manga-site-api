@@ -7,6 +7,7 @@ const puppeteer = require("puppeteer");
 
 const port = process.env.PORT || 3000;
 const hostURL = process.env.HOST_URL;
+const browserlessURL = process.env.BROWSERLESS_URL;
 
 app.use(cors());
 
@@ -149,7 +150,7 @@ app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
     url = `${baseURL}comic/${id}/${titleid}/${chapterid}`;
 
     console.log("Navigating to: ", url);
-    const endpoint = 'wss://chrome.browserless.io?token=7fc44ee7-19d6-4da4-9bde-5b445b58414c';
+    const endpoint = browserlessURL;
 
     const browser = await puppeteer.connect({
       browserWSEndpoint: endpoint,
