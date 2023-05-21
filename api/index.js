@@ -16,7 +16,7 @@ const baseURL = "https://mangapark.net/";
 async function setupPuppeteer(){
     const endpoint = browserlessURL;
 
-    await puppeteer.connect({
+    const browser = await puppeteer.connect({
         browserWSEndpoint: endpoint,
       });
     
@@ -26,6 +26,7 @@ async function setupPuppeteer(){
     //         '--no-sandbox',
     //     ]
     // });
+    return browser;
 }
 
 app.get('/api/browse/:page', async (req, res) => {
