@@ -19,14 +19,7 @@ app.get('/api/browse/:page', async (req, res) => {
     console.log('currently on page', pageNo);
 
     const url = `${baseURL}browse?page=${pageNo}`;
-    const response = await axios.get(url, {
-      headers: {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
-          'Referer': 'https://mangapark.net/',
-        },
-      }
-    });
+    const response = await axios.get(url);
     console.log("response -- : ", response);
     const $ = cheerio.load(response.data);
 
