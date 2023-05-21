@@ -13,6 +13,21 @@ app.use(cors());
 
 const baseURL = "https://mangapark.net/";
 
+async function setupPuppeteer(){
+    const endpoint = browserlessURL;
+
+    await puppeteer.connect({
+        browserWSEndpoint: endpoint,
+      });
+    
+    // const browser = await puppeteer.launch({
+    //     headless: "new",
+    //     args: [
+    //         '--no-sandbox',
+    //     ]
+    // });
+}
+
 app.get('/api/browse/:page', async (req, res) => {
     let pageNo = req.params.page;
     try {
@@ -22,19 +37,9 @@ app.get('/api/browse/:page', async (req, res) => {
         console.log('currently on page', pageNo);
 
         url = `${baseURL}browse?page=${pageNo}`;
-        const endpoint = browserlessURL;
 
-
-        const browser = await puppeteer.connect({
-            browserWSEndpoint: endpoint,
-          });
-        
-        // const browser = await puppeteer.launch({
-        //     headless: "new",
-        //     args: [
-        //         '--no-sandbox',
-        //     ]
-        // });
+        const browser =  await setupPuppeteer();
+       
         const page = await browser.newPage();
         await page.setDefaultNavigationTimeout(2 * 60 * 1000);
 
