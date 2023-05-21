@@ -25,8 +25,7 @@ app.get('/api/browse/:page', async (req, res) => {
             headless: "new",
             args: [
                 '--no-sandbox',
-                '--disable-setuid-sandbox',
-            ],
+            ]
 
         });
         const page = await browser.newPage();
