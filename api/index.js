@@ -13,13 +13,13 @@ app.use(cors());
 
 const baseURL = "https://mangapark.net/";
 
-async function setupPuppeteer(){
+async function setupPuppeteer() {
     const endpoint = browserlessURL;
 
     const browser = await puppeteer.connect({
         browserWSEndpoint: endpoint,
-      });
-    
+    });
+
     // const browser = await puppeteer.launch({
     //     headless: "new",
     //     args: [
@@ -39,8 +39,8 @@ app.get('/api/browse/:page', async (req, res) => {
 
         url = `${baseURL}browse?page=${pageNo}`;
 
-        const browser =  await setupPuppeteer();
-       
+        const browser = await setupPuppeteer();
+
         const page = await browser.newPage();
         await page.setDefaultNavigationTimeout(2 * 60 * 1000);
 
@@ -89,8 +89,11 @@ app.get('/api/browse/:page', async (req, res) => {
             mangas: scrapedData
         });
     } catch (error) {
-        console.error('Scraping failed', error);
-        res.status(500).send('Scraping failed');
+        console.error('Scraping failed', error.message);
+        res.status(500).json({
+          error: error.message,
+          failure: error
+        });
     }
 });
 
@@ -102,7 +105,7 @@ app.get('/api/manga/:id/:titleid', async (req, res) => {
 
         console.log("Navigating to: ", url);
 
-        const browser =  await setupPuppeteer();
+        const browser = await setupPuppeteer();
 
         const page = await browser.newPage();
         await page.setDefaultNavigationTimeout(2 * 60 * 1000);
@@ -135,8 +138,11 @@ app.get('/api/manga/:id/:titleid', async (req, res) => {
 
         res.json({ episodes: data });
     } catch (error) {
-        console.error('Scraping failed', error);
-        res.status(500).send('Scraping failed');
+        console.error('Scraping failed', error.message);
+        res.status(500).json({
+          error: error.message,
+          failure: error
+        });
     }
 });
 
@@ -149,10 +155,9 @@ app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
         url = `${baseURL}comic/${id}/${titleid}/${chapterid}`;
 
         console.log("Navigating to: ", url);
-        const browser =  await setupPuppeteer();
-        const page = await browser.newPage();
-        await page.setDefaultNavigationTimeout(2 * 60 * 1000);
 
+        const browser = await setupPuppeteer();
+        const page = await browser.newPage();
 
         await page.goto(url);
 
@@ -186,8 +191,11 @@ app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
 
         res.json({ images: data });
     } catch (error) {
-        console.error('Scraping failed', error);
-        res.status(500).send('Scraping failed');
+        console.error('Scraping failed', error.message);
+        res.status(500).json({
+            error: error.message,
+            failure: error
+        });
     }
 });
 
