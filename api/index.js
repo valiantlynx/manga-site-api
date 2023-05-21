@@ -73,7 +73,14 @@ app.get('/api/manga/:id/:titleid', async (req, res) => {
 
     console.log("Navigating to: ", url);
 
-    const response = await axios.get(url);
+    const response = await axios.get(url, {
+      headers: {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
+          'Referer': 'https://mangapark.net/',
+        },
+      }
+    });
     const $ = cheerio.load(response.data);
 
     const elements = $('.episode-item');
@@ -152,10 +159,10 @@ app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
     console.log("Navigating to: ", url);
     const endpoint = browserlessURL;
 
-    const browser = await puppeteer.connect({
-      browserWSEndpoint: endpoint,
-    });
-    
+    // const browser = await puppeteer.connect({
+    //   browserWSEndpoint: endpoint,
+    // });
+    const browser = await puppeteer.launch({ headless: "false" });
     const page = await browser.newPage();
     await page.setDefaultNavigationTimeout(2 * 60 * 1000);
 
