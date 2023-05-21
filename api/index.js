@@ -22,6 +22,8 @@ app.get('/api/browse/:page', async (req, res) => {
         console.log('currently on page', pageNo);
 
         url = `${baseURL}browse?page=${pageNo}`;
+        const endpoint = browserlessURL;
+
 
         const browser = await puppeteer.connect({
             browserWSEndpoint: endpoint,
