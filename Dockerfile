@@ -18,6 +18,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 # Install global dependencies
+RUN npm install -g nodemon@latest
+
+# Install dependencies
 RUN npm install
 
 # Copy application files
