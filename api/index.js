@@ -19,7 +19,10 @@ app.get('/api/browse/:page', async (req, res) => {
     console.log('currently on page', pageNo);
 
     const url = `${baseURL}browse?page=${pageNo}`;
-    const response = await axios.get(url);
+    const response = await axios.get(url).catch((err) => {
+      console.log("error: ", err);
+    });
+    
     console.log("response -- : ", response);
     const $ = cheerio.load(response.data);
 
