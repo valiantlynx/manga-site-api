@@ -6,6 +6,8 @@ const puppeteer = require("puppeteer");
 
 const port = process.env.PORT || 3000;
 const hostURL = process.env.HOST_URL
+const browserlessURL = process.env.BROWSERLESS_URL;
+
 
 app.use(cors());
 
@@ -21,13 +23,16 @@ app.get('/api/browse/:page', async (req, res) => {
 
         url = `${baseURL}browse?page=${pageNo}`;
 
-        const browser = await puppeteer.launch({
-            headless: "new",
-            args: [
-                '--no-sandbox',
-            ]
-
-        });
+        const browser = await puppeteer.connect({
+            browserWSEndpoint: endpoint,
+          });
+        
+        // const browser = await puppeteer.launch({
+        //     headless: "new",
+        //     args: [
+        //         '--no-sandbox',
+        //     ]
+        // });
         const page = await browser.newPage();
         await page.setDefaultNavigationTimeout(2 * 60 * 1000);
 
