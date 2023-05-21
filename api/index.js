@@ -27,6 +27,7 @@ app.get('/api/browse/:page', async (req, res) => {
         },
       }
     });
+    console.log("response -- : ", response);
     const $ = cheerio.load(response.data);
 
     const scrapedData = [];
