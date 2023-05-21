@@ -102,9 +102,8 @@ app.get('/api/manga/:id/:titleid', async (req, res) => {
 
         console.log("Navigating to: ", url);
 
-        const browser = await puppeteer.launch({
-            headless: "new",
-        });
+        const browser =  await setupPuppeteer();
+
         const page = await browser.newPage();
         await page.setDefaultNavigationTimeout(2 * 60 * 1000);
 
@@ -150,7 +149,7 @@ app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
         url = `${baseURL}comic/${id}/${titleid}/${chapterid}`;
 
         console.log("Navigating to: ", url);
-        const browser = await puppeteer.launch({ headless: "new" });
+        const browser =  await setupPuppeteer();
         const page = await browser.newPage();
         await page.setDefaultNavigationTimeout(2 * 60 * 1000);
 
