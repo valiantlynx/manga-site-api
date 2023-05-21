@@ -14,12 +14,11 @@ ENV CHROME_BIN=/usr/bin/chromium-browser
 
 # Set the working directory
 WORKDIR /app
+# Copy package.json and package-lock.json
+COPY package.json package-lock.json ./
 
 # Install global dependencies
 RUN npm install
-
-# Copy package.json and package-lock.json
-COPY package.json package-lock.json ./
 
 # Copy application files
 COPY ./ ./
