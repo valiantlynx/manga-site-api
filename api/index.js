@@ -20,10 +20,10 @@ app.get('/api/browse/:page', async (req, res) => {
 
     const url = `${baseURL}browse?page=${pageNo}`;
     const response = await axios.get(url).catch((err) => {
-      console.log("error: ", err);
+      console.log("error: ", err, err.message, err.response, err.response.data, err.data);
     });
-    
-    console.log("response -- : ", response);
+
+    console.log("response -- : ", response, response.data);
     const $ = cheerio.load(response.data);
 
     const scrapedData = [];
