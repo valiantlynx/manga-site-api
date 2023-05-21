@@ -21,7 +21,14 @@ app.get('/api/browse/:page', async (req, res) => {
 
         url = `${baseURL}browse?page=${pageNo}`;
 
-        const browser = await puppeteer.launch({ headless: "new" });
+        const browser = await puppeteer.launch({
+            headless: "new",
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+            ],
+
+        });
         const page = await browser.newPage();
         await page.setDefaultNavigationTimeout(2 * 60 * 1000);
 
@@ -64,11 +71,11 @@ app.get('/api/browse/:page', async (req, res) => {
         }
         await browser.close();
 
-        res.json({ 
+        res.json({
             page: pageNo,
 
             mangas: scrapedData
-         });
+        });
     } catch (error) {
         console.error('Scraping failed', error);
         res.status(500).send('Scraping failed');
@@ -83,7 +90,9 @@ app.get('/api/manga/:id/:titleid', async (req, res) => {
 
         console.log("Navigating to: ", url);
 
-        const browser = await puppeteer.launch({ headless: "new" });
+        const browser = await puppeteer.launch({
+            headless: "new",
+        });
         const page = await browser.newPage();
         await page.setDefaultNavigationTimeout(2 * 60 * 1000);
 
@@ -124,7 +133,7 @@ app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
     let id = req.params.id;
     let titleid = req.params.titleid;
     let chapterid = req.params.chapterid;
-    console.log("recieved dta:",id, titleid, chapterid);
+    console.log("recieved dta:", id, titleid, chapterid);
     try {
         url = `${baseURL}comic/${id}/${titleid}/${chapterid}`;
 
