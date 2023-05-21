@@ -19,7 +19,14 @@ app.get('/api/browse/:page', async (req, res) => {
     console.log('currently on page', pageNo);
 
     const url = `${baseURL}browse?page=${pageNo}`;
-    const response = await axios.get(url);
+    const response = await axios.get(url, {
+      headers: {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
+          'Referer': 'https://mangapark.net/',
+        },
+      }
+    });
     const $ = cheerio.load(response.data);
 
     const scrapedData = [];
@@ -60,8 +67,11 @@ app.get('/api/browse/:page', async (req, res) => {
       mangas: scrapedData,
     });
   } catch (error) {
-    console.error('Scraping failed', error);
-    res.status(500).send('Scraping failed');
+    console.error('Scraping failed', error.message);
+    res.status(500).json({
+      error: error.message,
+      failure: error
+    });
   }
 });
 
@@ -100,8 +110,11 @@ app.get('/api/manga/:id/:titleid', async (req, res) => {
 
     res.json({ episodes: data });
   } catch (error) {
-    console.error('Scraping failed', error);
-    res.status(500).send('Scraping failed');
+    console.error('Scraping failed', error.message);
+    res.status(500).json({
+      error: error.message,
+      failure: error
+    });
   }
 });
 
@@ -159,10 +172,10 @@ app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
     console.log("Navigating to: ", url);
     const endpoint = browserlessURL;
 
-    // const browser = await puppeteer.connect({
-    //   browserWSEndpoint: endpoint,
-    // });
-    const browser = await puppeteer.launch({ headless: "false" });
+    const browser = await puppeteer.connect({
+      browserWSEndpoint: endpoint,
+    });
+    // const browser = await puppeteer.launch({ headless: "false" });
     const page = await browser.newPage();
     await page.setDefaultNavigationTimeout(2 * 60 * 1000);
 
@@ -199,8 +212,11 @@ app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
 
     res.json({ images: data });
   } catch (error) {
-    console.error('Scraping failed', error);
-    res.status(500).send('Scraping failed');
+    console.error('Scraping failed', error.message);
+    res.status(500).json({
+      error: error.message,
+      failure: error
+    });
   }
 });
 
