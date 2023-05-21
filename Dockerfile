@@ -18,9 +18,6 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm ci --only=production
-
 # Install global dependencies
 RUN npm install -g nodemon
 
