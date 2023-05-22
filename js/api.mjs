@@ -1,7 +1,7 @@
 // this uses puppeteer to scrape the website, the problem is that puppeter needs chromium to be installed to run.
 // turn imports into module imports
 import { setupPuppeteer } from './puppeteer.mjs';
-import { pb, url } from './setupPocketbase.mjs';
+import { url } from './setupPocketbase.mjs';
 import express from 'express';
 import cors from 'cors';
 import * as dotenv from 'dotenv';
@@ -62,7 +62,6 @@ app.get('/ipfs/:cid', async (req, res) => {
     }
 });
 
-
 app.get('/api/browse/:page', async (req, res) => {
     let pageNo = req.params.page;
 
@@ -108,13 +107,12 @@ app.get('/api/browse/:page', async (req, res) => {
             scrapedData.push(content);
         });
 
-        const { ipfsFiles, mangaData } = await storeData(scrapedData);
+        storeData(scrapedData);
 
         res.json({
             page: pageNo,
             mangas: scrapedData,
-            ipfsFiles,
-            mangaData,
+          
         });
 
     } catch (error) {
@@ -125,5 +123,6 @@ app.get('/api/browse/:page', async (req, res) => {
         });
     }
 });
+
 
 app.listen(port, () => console.log(`running on ${port}`));
