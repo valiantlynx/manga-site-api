@@ -90,7 +90,6 @@ async function createMangaRecord(data) {
         // If data exists, return the existing record ID
         if (checkExistance.data.items.length > 0 && data.cid === checkExistance.data.items[0].imageCid) {
             console.log(`Manga record with title "${data.title}" already exists with ID: ${checkExistance.data.items[0].id} and name: ${checkExistance.data.items[0].title}`);
-            
             return checkExistance.data.items[0].id;
         }
 
