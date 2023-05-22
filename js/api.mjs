@@ -1,6 +1,5 @@
 // this uses puppeteer to scrape the website, the problem is that puppeter needs chromium to be installed to run.
 // turn imports into module imports
-import { setupPuppeteer } from './puppeteer.mjs';
 import { url } from './setupPocketbase.mjs';
 import express from 'express';
 import cors from 'cors';
@@ -8,8 +7,7 @@ import * as dotenv from 'dotenv';
 import axios from 'axios';
 import cheerio from 'cheerio';
 import { create } from 'ipfs-http-client';
-import { storeData } from './storeData.mjs';
-
+import { storeMangasData, storeMangaData } from './storeData.mjs';
 
 dotenv.config();
 const ipfs = create()
@@ -36,7 +34,6 @@ app.get('/', async (req, res) => {
         .catch((error) => {
             console.error("error: ", error.message);
         });
-
     // send pocketbase data
     res.send(resultList);
 });
@@ -107,12 +104,12 @@ app.get('/api/browse/:page', async (req, res) => {
             scrapedData.push(content);
         });
 
-        storeData(scrapedData);
+        storeMangasData(scrapedData);
 
         res.json({
             page: pageNo,
             mangas: scrapedData,
-          
+
         });
 
     } catch (error) {
@@ -124,5 +121,53 @@ app.get('/api/browse/:page', async (req, res) => {
     }
 });
 
+app.get('/api/manga/:id/:titleid', async (req, res) => {
+    let id = req.params.id;
+    let titleid = req.params.titleid;
+
+    try {
+        const url = `${baseURL}comic/${id}/${titleid}`;
+
+        console.log("Navigating to: ", url);
+
+        const response = await axios.get(url, {
+            headers: {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
+                    'Referer': 'https://mangapark.net/',
+                },
+            }
+        });
+        const $ = cheerio.load(response.data);
+
+        const elements = $('.episode-item');
+        const data = elements.map((index, element) => {
+            const srcElement = $(element).find('a');
+
+            // Extract the chapter ID from the src URL
+            const src = srcElement.attr('href');
+            const chapterId = src ? src.split('/').slice(-1)[0].split('-')[0] : null;
+
+            return {
+                src,
+                chapterId,
+                chapterTitle: srcElement.text(),
+                titleid,
+                id,
+                mangaUrl: url
+            };
+        }).get();
+
+        storeMangaData(data);
+
+        res.json({ episodes: data });
+    } catch (error) {
+        console.error('Scraping failed', error.message);
+        res.status(500).json({
+            error: error.message,
+            failure: error
+        });
+    }
+});
 
 app.listen(port, () => console.log(`running on ${port}`));
