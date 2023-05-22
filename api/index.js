@@ -8,7 +8,6 @@ const port = process.env.PORT || 3000;
 const hostURL = process.env.HOST_URL
 const browserlessURL = process.env.BROWSERLESS_URL;
 
-
 app.use(cors());
 
 const baseURL = "https://mangapark.net/";

@@ -29,5 +29,5 @@ COPY ./ ./
 # Expose the desired port
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "start"]
+# Start the application in the background
+CMD ["npm", "start", "&"]

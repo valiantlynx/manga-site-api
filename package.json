@@ -24,6 +24,7 @@
     "pocketbase": "^0.14.3",
     "puppeteer": "^19.11.1",
     "request": "^2.88.2",
+    "sharp": "^0.32.1",
     "uint8arrays": "^4.0.3",
     "uuid": "^9.0.0"
   }
