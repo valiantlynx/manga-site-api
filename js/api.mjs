@@ -7,7 +7,8 @@ import * as dotenv from 'dotenv';
 import axios from 'axios';
 import cheerio from 'cheerio';
 import { create } from 'ipfs-http-client';
-import { storeMangasData, storeMangaData } from './storeData.mjs';
+import { storeMangasData, storeMangaData, storeImagesData } from './storeData.mjs';
+import { setupPuppeteer } from './puppeteer.mjs';
 
 dotenv.config();
 const ipfs = create()
@@ -163,6 +164,73 @@ app.get('/api/manga/:id/:titleid', async (req, res) => {
         res.json({ episodes: data });
     } catch (error) {
         console.error('Scraping failed', error.message);
+        res.status(500).json({
+            error: error.message,
+            failure: error
+        });
+    }
+});
+
+app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
+    let id = req.params.id;
+    const titleid = req.params.titleid;
+    let chapterid = req.params.chapterid;
+    console.log("recieved dta:", id, titleid, chapterid);
+    try {
+        const chapterUrl = `${baseURL}comic/${id}/${titleid}/${chapterid}`;
+
+        console.log("Navigating to: ", chapterUrl);
+
+        const browser = await setupPuppeteer()
+        const page = await browser.newPage();
+        await page.setDefaultNavigationTimeout(2 * 60 * 1000);
+
+        await page.goto(chapterUrl);
+
+        await page.click('.ms-1')
+
+        const elements = Array.from(await page.$$("#viewer .item"));
+        const data = await Promise.all(
+            elements.map(async (imageBody) => {
+                const content = await imageBody.evaluate((e) => {
+                    const imgElement = e.querySelector('img');
+                    const pageElement = e.querySelector('.page-num');
+
+                    const imageUrl = imgElement ? imgElement.src : null;
+                    const chapterText = pageElement ? pageElement.innerText : null;
+                    const pageNumber = pageElement ? Number(pageElement.innerText.split(' / ')[0]) : null;
+                    const totalPages = pageElement ? Number(pageElement.innerText.split(' / ')[1]) : null;
+
+                    return {
+                        imageUrl,
+                        pageNumber,
+                        totalPages,
+                        chapterText,
+                    };
+                });
+                return content;
+            })
+        );
+
+        await browser.close();
+
+        storeImagesData({ 
+            chapterid,
+            titleid,
+            id,
+            chapterUrl,
+            images: data,
+        });
+
+        res.json({ 
+            chapterid,
+            titleid,
+            id,
+            chapterUrl,
+            images: data,
+        });
+    } catch (error) {
+        console.error('Scraping failed', error);
         res.status(500).json({
             error: error.message,
             failure: error

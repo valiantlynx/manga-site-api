@@ -127,26 +127,6 @@ async function createMangaRecord(data) {
     }
 }
 
-async function idAlreadyExistsInDatabase(id) {
-    // fetch all records from the database
-    const records = await axios.get(`http://localhost:8080/api/collections/users/records?sort=&filter=id="${id}"`,
-        {
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        }
-    ).then((res) => {
-        // console.log(res.data);
-        return res.data;
-    }).catch((err) => {
-        // console.log(err.message);
-        return err.message;
-    });
-
-    return records.items.some(record => record.id === id);
-}
-
-
 export async function storeMangaData(data) {
     console.log('Storing chapter data to IPFS');
     // Add IPFS storage logic here
@@ -154,7 +134,7 @@ export async function storeMangaData(data) {
     const chapterData = [];
 
     for (const content of data) {
-    
+
         const {
             src,
             chapterId,
@@ -188,7 +168,7 @@ async function createChapterRecord(data) {
     const hash = generateHash(data.mangaUrl);
     const src = `${baseURL}${data.src}`
     const id = generateHash(src);
-  
+
     console.log("hash", hash); // Output: a 13-character hash based on the input data
 
     try {
@@ -212,6 +192,116 @@ async function createChapterRecord(data) {
         return response.data.id;
     } catch (error) {
         console.error(`Error creating chapter record: ${error}`);
+    }
+}
+
+export async function storeImagesData(data) {
+    console.log('Storing images data to IPFS');
+    // Add IPFS storage logic here
+    const ipfsFiles = [];
+    const imagesData = [];
+
+    const {
+        chapterid,
+        titleid,
+        id,
+        chapterUrl,
+        images
+    } = data
+
+
+    for (const content of images) {
+
+        const {
+            imageUrl,
+            pageNumber,
+            totalPages,
+            chapterText,
+        } = content;
+
+        console.log('Fetching image', imageUrl);
+
+        // Fetch the image data
+        const imageResponse = await axios.get(imageUrl, {
+            responseType: 'arraybuffer',
+        });
+
+        // Add the image data to IPFS
+        const imageBuffer = Buffer.from(imageResponse.data);
+        const ipfsFile = await ipfs.add(imageBuffer);
+
+        // Pin the added image
+        const pinned = await ipfs.pin.add(ipfsFile.cid);
+        const pinList = await ipfs.pin.ls();
+
+        let isPinned = false
+        for await (const pin of pinList) {
+            if (pin.cid.toString() === ipfsFile.cid.toString()) {
+                isPinned = true
+            }
+        }
+
+        ipfsFiles.push(ipfsFile);
+
+        // Store chapter data with IPFS information
+        const imagesInfo = {
+            imageUrl,
+            pageNumber,
+            totalPages,
+            chapterText,
+            id,
+            titleid,
+            chapterid,
+            chapterUrl
+        };
+        imagesData.push("imagesInfo", imagesInfo);
+
+        console.log('Added image to IPFS', imagesInfo.imageUrl);
+
+        // Add the image to IPFS MFS with the title as the filename
+        const mfsPath = `/images/${titleid}/${chapterid}/${pageNumber}.png`; // Customize the path and file extension as needed
+        await ipfs.files.write(mfsPath, imageBuffer, { create: true, parents: true });
+        console.log('Added image to IPFS MFS', mfsPath);
+
+
+        // store chapter data to database
+        await createImagesRecord(imagesInfo);
+    }
+    return { ipfsFiles, imagesData };
+}
+
+async function createImagesRecord(data) {
+    const hash = generateHash(data.chapterUrl);
+    const id = generateHash(data.imageUrl);
+
+    console.log("hash", hash); // Output: a 13-character hash based on the input data
+    console.log("src", id); // Output: a 13-character hash based on the input data
+
+    try {
+        // Check if the record already exists
+        const checkExistance = await axios.get(`http://localhost:8080/api/collections/images/records?sort=&filter=id="${id}"`);
+
+        // If data exists, return the existing record ID
+        if (checkExistance.data.items.length > 0) {
+            console.log(`Images record with src "${data.imageUrl}" already exists with ID: ${checkExistance.data.items[0].id}`);
+            return checkExistance.data.items[0].id;
+        }
+
+        const imagesData = {
+            id: id ? id : "",
+            chapterId: hash ? hash : "",
+            img: data.imageUrl ? data.imageUrl : "",
+            chapterText: data.chapterText ? data.chapterText : "",
+            totalPages: data.totalPages ? data.totalPages : 0,
+            pageNumber: data.pageNumber ? data.pageNumber : 0,
+        };
+        console.log("imagesData", imagesData);
+
+        const response = await axios.post(`http://localhost:8080/api/collections/images/records`, imagesData);
+        console.log(`Images record created with ID: ${response.data.id}`);
+        return response.data.id;
+    } catch (error) {
+        console.error(`Error creating images record: ${error}`);
     }
 }
 

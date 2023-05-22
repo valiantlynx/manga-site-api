@@ -126,15 +126,13 @@ app.get('/api/manga/:id/:titleid', async (req, res) => {
 
 //     const response = await axios.get(url);
 //     const $ = cheerio.load(response.data);
-//     // after here i need to click abutton to get the images
 
+//     // after here i need to click a button to get the images
 //     const elements = $('.item');
 
 //     const data = elements.map((index, element) => {
 //       const imgElement = $(element).find('img');
 //       const pageElement = $(element).find('.page-num');
-
-
 
 //       const imageUrl = imgElement.attr('src');
 //       const chapterText = pageElement.text();

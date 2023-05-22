@@ -1,7 +1,6 @@
 import puppeteer from 'puppeteer';
 import * as dotenv from 'dotenv';
 
-
 dotenv.config();
 
 const hostURL = process.env.HOST_URL
