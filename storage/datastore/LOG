@@ -41,3 +41,13 @@
 =============== May 22, 2023 (UTC) ===============
 03:01:04.719231 db@close closing
 03:01:04.721465 db@close done T·2.325087ms
+=============== May 22, 2023 (UTC) ===============
+11:13:15.065293 log@legend F·NumFile S·FileSize N·Entry C·BadEntry B·BadBlock Ke·KeyError D·DroppedEntry L·Level Q·SeqNum T·TimeElapsed
+11:13:15.080259 version@stat F·[1] S·1KiB[1KiB] Sc·[0.25]
+11:13:15.080951 db@open opening
+11:13:15.082918 journal@recovery F·1
+11:13:15.085110 journal@recovery recovering @7
+11:13:15.125991 memdb@flush created L0@9 N·8998 S·646KiB "/F5..YQQ,v8933":"/pr..GEE,v697"
+11:13:15.127928 version@stat F·[2] S·648KiB[648KiB] Sc·[0.50]
+11:13:15.165280 db@janitor F·4 G·0
+11:13:15.165674 db@open done T·84.486165ms
