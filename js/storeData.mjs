@@ -5,7 +5,7 @@ import { generateHash } from './hashGenerator.mjs';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
-const ipfs = create()
+const ipfs = create(process.env.IPFS_URL)
 
 const hostURL = process.env.HOST_URL
 const baseURL = "https://mangapark.net";

@@ -11,7 +11,7 @@ import { storeMangasData, storeMangaData, storeImagesData } from './storeData.mj
 import { setupPuppeteer } from './puppeteer.mjs';
 
 dotenv.config();
-const ipfs = create()
+const ipfs = create(process.env.IPFS_URL)
 const app = express();
 
 const port = process.env.PORT;
@@ -40,23 +40,33 @@ app.get('/', async (req, res) => {
 });
 
 app.get('/ipfs/:cid', async (req, res) => {
+    console.log("requesting cid: ");
     const cid = req.params.cid;
-
+    console.log("recived cid: ", cid, " from: ", req.ip);
     try {
         const chunks = [];
         for await (const chunk of ipfs.cat(cid)) {
+
             chunks.push(chunk);
         }
         const data = Buffer.concat(chunks);
 
+        console.log('IPFS data retrieved successfully');
+
         // Set the appropriate content type for the image
         res.set('Content-Type', 'image/png');
 
+        console.log('Sending IPFS data as response');
+
         // Process the data or send it as a response
         res.send(data);
+        console.log('IPFS data sent successfully');
     } catch (error) {
         console.error('Error retrieving IPFS data:', error);
-        res.status(500).send('Error retrieving IPFS data');
+        res.json({
+            error: error.message,
+            failure: error
+        });
     }
 });
 
@@ -214,7 +224,7 @@ app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
 
         await browser.close();
 
-        storeImagesData({ 
+        storeImagesData({
             chapterid,
             titleid,
             id,
@@ -222,7 +232,7 @@ app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
             images: data,
         });
 
-        res.json({ 
+        res.json({
             chapterid,
             titleid,
             id,
