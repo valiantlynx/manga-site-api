@@ -4,5 +4,15 @@ screenshot.png
 
 .vscode
 .dist
-/storage/*
+/storage/blocks
+/storage/datastore
+/storage/keystore
+/storage/api
+/storage/config
+/storage/datastore_spec
+/storage/gateway
+/storage/repo.lock
+/storage/version
+
+
 
