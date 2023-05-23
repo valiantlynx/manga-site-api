@@ -13,6 +13,7 @@ const ipfsURL = process.env.IPFS_URL
 const pbURL = process.env.PB_URL
 
 export async function storeMangasData(scrapedData) {
+    console.log('Storing manga data');
     // Add IPFS storage logic here
     const ipfsFiles = [];
     const mangaData = [];
@@ -34,10 +35,14 @@ export async function storeMangasData(scrapedData) {
         // Fetch the image data
         const imageResponse = await axios.get(img, {
             responseType: 'arraybuffer',
+            headers: {
+                'Content-Type': 'image/png',
+            },
         });
 
         // Add the image data to IPFS
         const imageBuffer = Buffer.from(imageResponse.data);
+        console.log('Adding image to IPFS');
         const ipfsFile = await ipfs.add(imageBuffer);
 
         // Pin the added image
@@ -304,7 +309,6 @@ async function createImagesRecord(data) {
             isPinned: data.isPinned ? data.isPinned : false,
             img: data.img ? data.img : "",
         };
-        console.log("imagesData", imagesData);
 
         const response = await axios.post(`${pbURL}/api/collections/images/records`, imagesData);
         console.log(`Images record created with ID: ${response.data.id}`);
@@ -313,5 +317,3 @@ async function createImagesRecord(data) {
         console.error(`Error creating images record: ${error}`);
     }
 }
-
-

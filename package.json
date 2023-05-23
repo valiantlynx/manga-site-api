@@ -2,9 +2,9 @@
   "name": "pocketbase-upload-maga",
   "version": "1.0.0",
   "description": "",
-  "main": "api/index.js",
+  "main": "js/index.mjs",
   "scripts": {
-    "start": "nodemon api",
+    "start": "nodemon js/index.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

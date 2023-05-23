@@ -30,4 +30,4 @@ COPY ./ ./
 EXPOSE 3000
 
 # Start the application in the background
-CMD ["npm", "start", "&"]
+CMD ["npm", "start"]

@@ -1,403 +1,241 @@
-import puppeteer from "puppeteer"; // 'puppeteer' if not using browserless and 'puppeteer-core' if using browserless
-// import { downloadChapter } from "./downloadChapter";
-// import { downloadManga } from "./downloadManga";
-
-// import PocketBase from "pocketbase";
-// import fetch from "node-fetch";
-// import fs from "fs";
-import axios from "axios";
-
-
-
-async function generateId() {
-    let id = '';
-    const length = 15;
-    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
-
-    do {
-        for (let i = 0; i < length; i++) {
-            const randomIndex = Math.floor(Math.random() * characters.length);
-            id += characters[randomIndex];
-        }
-    } while (await idAlreadyExistsInDatabase(id));
-
-    return id;
-}
-
-async function idAlreadyExistsInDatabase(id) {
-    // fetch all records from the database
-    const records = await axios.get(`http://localhost:8080/api/collections/users/records?sort=&filter=id="${id}"`,
-        {
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        }
-    ).then((res) => {
-        // console.log(res.data);
-        return res.data;
-    }).catch((err) => {
-        // console.log(err.message);
-        return err.message;
-    });
-
-    return records.items.some(record => record.id === id);
-}
-
-async function run() {
-    let browser;
-    const pageNumber = 1;
-    // const endpoint = 'wss://chrome.browserless.io?token=7fc44ee7-19d6-4da4-9bde-5b445b58414c';
-
-    // loop through the pages and get the manga list from each page starting from page pageNumber to the last page, the last page is unknown
-    for (let i = pageNumber; i <= 2553; i++) {
-
-        console.log("currently on page", i);
-
-        // test url 
-        //const url = `https://bot.sannysoft.com/`;
-        const url = `https://mangapark.net/browse?page=${i}`;
-        console.log("url", url);
-        try {
-
-            // browser = await puppeteer.connect({
-            //     browserWSEndpoint: endpoint,
-            // });
-
-            // 'false' makes the browser visible and it does not look like a robot, 
-            // 'true' makes the browser invisible and it looks like a robot
-            // 'new' makes the browser invisible and it does not look like a robot,
-            browser = await puppeteer.launch({ headless: "false" });
-
-            const page = await browser.newPage();
-            await page.setDefaultNavigationTimeout(2 * 60 * 1000);
-
-            // go to the url and get the manga list
-            await page.goto(url);
-            await page.screenshot({ path: "screenshot.png" });
-
-            await page.waitForSelector("#subject-list");
-
-            const mangas = Array.from(await page.$$(".pb-3"));
-            const data = await Promise.all(
-                mangas.map(async (manga) => {
-
-                    const content = await manga.evaluate(async (e) => {
-                        const titleElement = e.querySelector('.fw-bold')
-                        const imgElement = e.querySelector('img')
-                        const tagsElement = e.querySelector('.genres')
-                        const chaptersElement = e.querySelector('.text-ellipsis-1')
-                        const srcElement = e.querySelector('a')
-                        const descriptionElement = e.querySelector('.limit-html')
-                        const authorElement = e.querySelector('.autarts')
-
-                        return {
-                            title: titleElement ? titleElement.innerText : null,
-                            img: imgElement ? imgElement.getAttribute('src') : null,
-                            tags: tagsElement ? tagsElement.innerText : null,
-                            latestChapter: chaptersElement ? chaptersElement.innerText : null,
-                            src: srcElement ? srcElement.href : null,
-                            description: descriptionElement ? descriptionElement.innerText : null,
-                            author: authorElement ? [authorElement.innerText, authorElement.querySelector('a').href] : null, // [name, link] might use the link later to get more info
-                        };
-                    });
-
-                    return content;
-                })
-            );
-
-            console.log("data new", JSON.stringify(data[0], null, 2));
-
-            let mangaData = {}
-
-            const delay = (ms) => new Promise((res) => setTimeout(res, ms));
-
-
-            // go to each manga page and get the image
-            for (const manga of data) {
-                console.log("Navigating to: ", manga.src);
-                await page.goto(manga.src);
-                await delay(1000);
-
-                const elements = Array.from(await page.$$(".episode-item"));
-                const data = await Promise.all(
-                    elements.map(async (chapterBody) => {
-                        const content = await chapterBody.evaluate((e) => {
-                            const srcElement = e.querySelector('a')
-
-                            return {
-                                src: srcElement ? srcElement.href : null,
-                                chapterTitle: srcElement ? srcElement.innerText : null,
-                            };
-                        });
-                        return content;
-                    })
-                );
-
-                // download the manga profile image
-                console.log("Downloading manga profile image...");
-                console.log("manga", manga)
-                // downloadManga(manga)
-                const mangaId = await createMangaRecord(manga)
-
-                console.log("mangaId", mangaId)
-
-                // go to each chapter page and get the images
-                for (const chapter of data) {
-                    console.log("Navigating to: ", chapter.src);
-                    await page.goto(chapter.src);
-                    await delay(1000);
-
-                    await page.click('.ms-1')
-
-                    const elements = Array.from(await page.$$("#viewer .item"));
-                    const data = await Promise.all(
-                        elements.map(async (imageBody) => {
-                            const content = await imageBody.evaluate((e) => {
-                                const imgElement = e.querySelector('img');
-                                const pageElement = e.querySelector('.page-num');
-
-                                const imageUrl = imgElement ? imgElement.src : null;
-                                const chapterText = pageElement ? pageElement.innerText : null;
-                                const pageNumber = pageElement ? Number(pageElement.innerText.split(' / ')[0]) : null;
-                                const totalPages = pageElement ? Number(pageElement.innerText.split(' / ')[1]) : null;
-
-                                return {
-                                    imageUrl,
-                                    pageNumber,
-                                    totalPages,
-                                    chapterText,
-                                };
-                            });
-
-                            return content;
-                        })
-                    );
-
-                    // download the images
-                    console.log("Downloading chapter images...");
-                    console.log("chapter", chapter);
-                    // downloadChapter(chapter, manga, data)
-                    uploadChapter(chapter, mangaId, data)
-
-                    mangaData = {
-                        ...manga,
-                        chapters: data
-                    }
-
-                    // console.log("mangaData", mangaData);
-                }
-            }
-
-
-            await page.close();
-
-        } catch (e) {
-            console.log("scrape failed", e);
-        } finally {
-            await browser?.close();
-        }
-
-
-
-        console.log("Finished scraping page", i, "of", 2553);
-    }
-
-
-
-
-}
-
-// async function downloadManga(data) {
-
-//     // create the mangas folder if it does not exist and create the manga folder if it does not exist
-//     if (!fs.existsSync("./mangas")) {
-//         console.log("No mangas folder found. Creating mangas folder...");
-//         fs.mkdirSync("./mangas");
-//         if (!fs.existsSync(`./mangas/${data.title}`)) {
-//             console.log(`No manga folder found for ${data.title}. Creating manga folder...`);
-//             fs.mkdirSync(`./mangas/${data.title}`);
-//         }
-//     }
-
-//     try {
-
-//         // download the imaage and save it to the chapter folder as the manga profile image
-//         let fileName = `./mangas/${data.title}/profile.jpg`;
-
-//         // check if the file already exists
-//         if (fs.existsSync(fileName)) {
-//             // read the existing file and check if it's the same
-//             const existingFile = fs.readFileSync(fileName);
-//             const newFile = await fetch(data.img).then((res) => res.buffer());
-//             if (existingFile.equals(newFile)) {
-//                 console.log(`Skipped ${fileName}`);
-//             } else {
-//                 // add a number to the file name if it already exists but is not the same
-//                 let i = 1;
-//                 while (fs.existsSync(`./mangas/${data.title}/profile-${i}.jpg`)) {
-//                     i++;
-//                 }
-//                 fileName = `./mangas/${data.title}/profile-${i}.jpg`;
-//             }
-//         }
-//         // download the file and save it
-//         const response = await fetch(data.img);
-//         const buffer = await response.buffer();
-//         fs.writeFileSync(fileName, buffer);
-//         console.log(`Downloaded ${fileName}`);
-
-//     }
-//     catch (e) {
-//         console.log("download failed", e, e.message);
-//     }
-// }
-
-// async function downloadChapter(chapter, manga, data) {
-
-//     // create the mangas folder if it does not exist and create the manga folder if it does not exist and create the chapter folder if it does not exist
-//     if (!fs.existsSync("./mangas")) {
-//         console.log("No mangas folder found. Creating mangas folder...");
-//         fs.mkdirSync("./mangas");
-//         console.log(`Created mangas folder. Creating manga folder...`);
-
-//     }
-//     if (!fs.existsSync(`./mangas/${manga.title}`)) {
-//         console.log(`No manga folder found for ${manga.title}. Creating manga folder...`);
-//         fs.mkdirSync(`./mangas/${manga.title}`);
-//         console.log(`Created manga folder for ${manga.title}. Creating chapter folder...`);
-
-//     }
-//     if (!fs.existsSync(`./mangas/${manga.title}/${chapter.chapterTitle}`)) {
-//         console.log(`No chapter folder found for ${chapter.chapterTitle}. Creating chapter folder...`);
-//         fs.mkdirSync(`./mangas/${manga.title}/${chapter.chapterTitle}`);
-
-//     }
-
-//     try {
-//         // loop through the data and download each image and save it to the chapter folder with the page number as the file name
-//         for (const image of data) {
-//             let fileName = `./mangas/${manga.title}/${chapter.chapterTitle}/${image.pageNumber}.jpg`;
-
-//             // check if the file already exists
-//             if (fs.existsSync(fileName)) {
-//                 // read the existing file and check if it's the same
-//                 const existingFile = fs.readFileSync(fileName);
-//                 const newFile = await fetch(image.imageUrl).then((res) => res.buffer());
-//                 if (existingFile.equals(newFile)) {
-//                     console.log(`Skipped ${fileName}`);
-//                 } else {
-//                     // add a number to the file name if it already exists but is not the same
-//                     let i = 1;
-//                     while (fs.existsSync(`./mangas/${manga.title}/${chapter.chapterTitle}/${image.pageNumber}-${i}.jpg`)) {
-//                         i++;
-//                     }
-//                     fileName = `./mangas/${manga.title}/${chapter.chapterTitle}/${image.pageNumber}-${i}.jpg`;
-//                 }
-//             }
-//             // download the file and save it
-//             const response = await fetch(image.imageUrl);
-//             const buffer = await response.buffer();
-//             fs.writeFileSync(fileName, buffer);
-//             console.log(`Downloaded ${fileName}`);
-//         }
-
-//     }
-//     catch (e) {
-//         console.log("download failed", e, e.message);
-//     }
-// }
-
-
-async function createMangaRecord(data) {
-    const id = await generateId()
-    console.log("id", id)
-    try {
-        // Check if the record already exists
-        const checkExistance = await axios.get(`http://localhost:8080/api/collections/manga/records?sort=&filter=title="${data.title}"`);
-
-        // If data exists, return the existing record ID
-        if (checkExistance.data.items.length > 0) {
-            console.log(`Manga record with title "${data.title}" already exists with ID: ${checkExistance.data.items[0].id}`);
-            return checkExistance.data.items[0].id;
-        }
-
-        // // Convert image data to base64
-        // const imageResponse = await axios.get(data.img, {
-        //     responseType: 'arraybuffer'
-        // });
-        // const base64Image = Buffer.from(imageResponse.data, 'binary').toString('base64');
-
-        const response = await axios.post('http://localhost:8080/api/collections/manga/records', {
-            "id": id ? id : "",
-            "title": data.title ? data.title : "",
-         
-            "img": data.img ? data.img : "",
-            "tags": data.tags ? data.tags : [],
-            "latestChapter": data.latestChapter ? data.latestChapter : 0,
-            "src": data.src ? data.src : "",
-            "description": data.description ? data.description : "",
-            "author": data.author ? data.author : "",
+// this uses puppeteer to scrape the website, the problem is that puppeter needs chromium to be installed to run.
+// turn imports into module imports
+import { url } from './setupPocketbase.mjs';
+import express from 'express';
+import cors from 'cors';
+import * as dotenv from 'dotenv';
+import axios from 'axios';
+import cheerio from 'cheerio';
+import { create } from 'ipfs-http-client';
+import { storeMangasData, storeMangaData, storeImagesData } from './storeData.mjs';
+import { setupPuppeteer } from './puppeteer.mjs';
+
+dotenv.config();
+const ipfs = create()
+const app = express();
+
+const port = process.env.PORT;
+const hostURL = process.env.HOST_URL
+
+app.use(cors());
+
+const baseURL = "https://mangapark.net/";
+
+app.get('/', async (req, res) => {
+    const page = req.query.page || 100;
+
+    const resultList = await axios.get(`${url}/api/collections/manga/records?page=${page}`, {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+        .then((res) => {
+            return res.data;
+        })
+        .catch((error) => {
+            console.error("error: ", error.message);
         });
-        console.log(`Manga record created with ID: ${response.data.id}`);
-        return response.data.id;
-    } catch (error) {
-        console.error(`Error creating manga record: ${error}`);
-    }
-}
+    // send pocketbase data
+    res.send(resultList);
+});
 
-async function uploadChapter(chapter, mangaId, data) {
+app.get('/ipfs/:cid', async (req, res) => {
+    const cid = req.params.cid;
 
     try {
-        // Check if the record already exists
-        const checkExistance = await axios.get(`http://localhost:8080/api/collections/chapters/records?sort=&filter=title="${chapter.chapterTitle}"&&mangaId="${mangaId}"`);
-
-        // If data exists, return the existing record ID
-        if (checkExistance.data.items.length > 0) {
-            console.log(`Chapter record with title "${chapter.chapterTitle}" and managaId ${mangaId} already exists with ID: ${checkExistance.data.items[0].id}`);
-            return checkExistance.data.items[0].id;
+        const chunks = [];
+        for await (const chunk of ipfs.cat(cid)) {
+            chunks.push(chunk);
         }
+        const data = Buffer.concat(chunks);
 
-        const chapterData = {
-            mangaId: mangaId ? mangaId : "",
-            src: chapter.src ? chapter.src : "",
-            title: chapter.chapterTitle ? chapter.chapterTitle : "",
-        };
-        const response = await axios.post(`http://localhost:8080/api/collections/chapters/records`, chapterData);
-        console.log(`Chapter record created with ID: ${response.data.id}`);
+        // Set the appropriate content type for the image
+        res.set('Content-Type', 'image/png');
 
+        // Process the data or send it as a response
+        res.send(data);
+    } catch (error) {
+        console.error('Error retrieving IPFS data:', error);
+        res.status(500).send('Error retrieving IPFS data');
+    }
+});
 
+app.get('/api/browse/:page', async (req, res) => {
+    let pageNo = req.params.page;
 
-        // loop through the data and upload each image to the chapter record
-        for (const image of data) {
-            // // Convert image data to base64
-            // const imageDownload = await axios.get(image.imageUrl, {
-            //     responseType: 'arraybuffer'
-            // });
-            // const base64Image = Buffer.from(imageDownload.data, 'binary').toString('base64');
+    try {
+        console.log('currently on page', pageNo);
 
-            const imageData = {
-                pageNumber: image.pageNumber ? image.pageNumber : "",
-                img: image.imageUrl ? image.imageUrl : "",
-                chapterId: response.data.id ? response.data.id : "",
-                totalPages: image.totalPages ? image.totalPages : "",
-                chapterText: image.chapterText ? image.chapterText : "",
-           
+        const url = `${baseURL}browse?page=${pageNo}`;
+        const response = await axios.get(url).catch((err) => {
+            console.log("error: ", err.message);
+        });
+        const $ = cheerio.load(response.data);
+
+        const scrapedData = [];
+
+        $('.pb-3').each((index, element) => {
+            const titleElement = $(element).find('.fw-bold');
+            const imgElement = $(element).find('img');
+            const tagsElement = $(element).find('.genres');
+            const chaptersElement = $(element).find('.text-ellipsis-1');
+            const srcElement = $(element).find('a');
+            const descriptionElement = $(element).find('.limit-html');
+            const authorElement = $(element).find('.autarts');
+
+            // Extract the ID and title ID from the src URL
+            const src = srcElement.attr('href');
+            const id = src ? src.split('/').slice(-2, -1)[0] : null;
+            const titleId = src ? src.split('/').slice(-1)[0] : null;
+
+            const content = {
+                title: titleElement.text().trim(),
+                img: imgElement.attr('src'),
+                tags: tagsElement.text(),
+                latestChapter: chaptersElement.text(),
+                src,
+                id,
+                titleId,
+                description: descriptionElement.text(),
+                author: authorElement.length
+                    ? [authorElement.text(), authorElement.find('a').attr('href')]
+                    : null,
             };
 
-            // check if the image record already exists
-            const existingImage = await axios.get(`http://localhost:8080/api/collections/images/records?sort=&filter=chapterId="${response.data.id}"&&pageNumber="${imageData.pageNumber}"`);
-            if (existingImage.data.length > 0) {
-                console.log(`Skipped ${imageData.imageUrl}`);
-            }
-            // create a new image record
-            const imageResponse = await axios.post('http://localhost:8080/api/collections/images/records', imageData);
-            console.log(`Image record created with ID: ${imageResponse.data.id}`);
+            scrapedData.push(content);
+        });
 
-        }
+        storeMangasData(scrapedData);
+
+        res.json({
+            page: pageNo,
+            mangas: scrapedData,
+
+        });
+
     } catch (error) {
-        console.error(`Error creating chapter record: ${error}`);
+        console.error('Scraping failed', error.message);
+        res.status(500).json({
+            error: error.message,
+            failure: error
+        });
     }
-}
+});
 
-run();
+app.get('/api/manga/:id/:titleid', async (req, res) => {
+    let id = req.params.id;
+    let titleid = req.params.titleid;
 
+    try {
+        const url = `${baseURL}comic/${id}/${titleid}`;
+
+        console.log("Navigating to: ", url);
+
+        const response = await axios.get(url, {
+            headers: {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
+                    'Referer': 'https://mangapark.net/',
+                },
+            }
+        });
+        const $ = cheerio.load(response.data);
+
+        const elements = $('.episode-item');
+        const data = elements.map((index, element) => {
+            const srcElement = $(element).find('a');
+
+            // Extract the chapter ID from the src URL
+            const src = srcElement.attr('href');
+            const chapterId = src ? src.split('/').slice(-1)[0].split('-')[0] : null;
+
+            return {
+                src,
+                chapterId,
+                chapterTitle: srcElement.text(),
+                titleid,
+                id,
+                mangaUrl: url
+            };
+        }).get();
+
+        storeMangaData(data);
+
+        res.json({ episodes: data });
+    } catch (error) {
+        console.error('Scraping failed', error.message);
+        res.status(500).json({
+            error: error.message,
+            failure: error
+        });
+    }
+});
+
+app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
+    let id = req.params.id;
+    const titleid = req.params.titleid;
+    let chapterid = req.params.chapterid;
+    console.log("recieved dta:", id, titleid, chapterid);
+    try {
+        const chapterUrl = `${baseURL}comic/${id}/${titleid}/${chapterid}`;
+
+        console.log("Navigating to: ", chapterUrl);
+
+        const browser = await setupPuppeteer()
+        const page = await browser.newPage();
+        await page.setDefaultNavigationTimeout(2 * 60 * 1000);
+
+        await page.goto(chapterUrl);
+
+        await page.click('.ms-1')
+
+        const elements = Array.from(await page.$$("#viewer .item"));
+        const data = await Promise.all(
+            elements.map(async (imageBody) => {
+                const content = await imageBody.evaluate((e) => {
+                    const imgElement = e.querySelector('img');
+                    const pageElement = e.querySelector('.page-num');
+
+                    const imageUrl = imgElement ? imgElement.src : null;
+                    const chapterText = pageElement ? pageElement.innerText : null;
+                    const pageNumber = pageElement ? Number(pageElement.innerText.split(' / ')[0]) : null;
+                    const totalPages = pageElement ? Number(pageElement.innerText.split(' / ')[1]) : null;
+
+                    return {
+                        imageUrl,
+                        pageNumber,
+                        totalPages,
+                        chapterText,
+                    };
+                });
+                return content;
+            })
+        );
+
+        await browser.close();
+
+        storeImagesData({ 
+            chapterid,
+            titleid,
+            id,
+            chapterUrl,
+            images: data,
+        });
+
+        res.json({ 
+            chapterid,
+            titleid,
+            id,
+            chapterUrl,
+            images: data,
+        });
+    } catch (error) {
+        console.error('Scraping failed', error);
+        res.status(500).json({
+            error: error.message,
+            failure: error
+        });
+    }
+});
+
+app.listen(port, () => console.log(`running on ${port}`));
