@@ -77,7 +77,12 @@ app.get('/api/browse/:page', async (req, res) => {
         console.log('currently on page', pageNo);
 
         const url = `${baseURL}browse?page=${pageNo}`;
-        const response = await axios.get(url).catch((err) => {
+        const response = await axios.get(url, {            
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36',
+                    'Referer': 'https://mangapark.net/',
+                },
+        }).catch((err) => {
             console.log("error: ", err.message);
         });
         const $ = cheerio.load(response.data);
@@ -141,13 +146,12 @@ app.get('/api/manga/:id/:titleid', async (req, res) => {
 
         console.log("Navigating to: ", url);
 
-        const response = await axios.get(url, {
-            headers: {
+        const response = await axios.get(url, {           
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
+                    'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36',
                     'Referer': 'https://mangapark.net/',
                 },
-            }
+            
         });
         const $ = cheerio.load(response.data);
 
