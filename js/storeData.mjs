@@ -118,7 +118,7 @@ async function createMangaRecord(data) {
             "imageCid": data.cid ? data.cid : "",
             "isPinned": data.isPinned ? data.isPinned : false,
         }
-        const response = await axios.post('${pbURL}/api/collections/manga/records', mangaData);
+        const response = await axios.post(`${pbURL}/api/collections/manga/records`, mangaData);
 
         console.log(`Manga record created with ID: ${response.data.id}`);
         return response.data.id;

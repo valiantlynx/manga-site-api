@@ -1,6 +1,9 @@
 import PocketBase from 'pocketbase';
+import * as dotenv from 'dotenv';
 
-export let url = 'http://127.0.0.1:8080'
+dotenv.config();
+
+export let url = process.env.PB_URL
 
 export const pb = new PocketBase(url);
 
