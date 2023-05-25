@@ -28,6 +28,7 @@ export async function storeMangasData(scrapedData) {
             description,
             author,
             titleId,
+            mangaParkId
         } = content;
 
         console.log('Fetching image', img);
@@ -70,7 +71,8 @@ export async function storeMangasData(scrapedData) {
             src,
             description,
             author,
-            titleId
+            titleId,
+            mangaParkId
         };
         mangaData.push("mangaInfo", mangaInfo);
 
@@ -117,6 +119,7 @@ async function createMangaRecord(data) {
             "author": data.author ? data.author : "",
             "imageCid": data.cid ? data.cid : "",
             "isPinned": data.isPinned ? data.isPinned : false,
+            "mangaParkId": data.mangaParkId ? data.mangaParkId : ""
         }
         const response = await axios.post(`${pbURL}/api/collections/manga/records`, mangaData);
 

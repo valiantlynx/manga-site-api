@@ -109,7 +109,7 @@ app.get('/api/browse/:page', async (req, res) => {
                 tags: tagsElement.text(),
                 latestChapter: chaptersElement.text(),
                 src,
-                id,
+                mangaParkId: id,
                 titleId,
                 description: descriptionElement.text(),
                 author: authorElement.length
