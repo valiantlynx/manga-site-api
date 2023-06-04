@@ -213,12 +213,10 @@ export async function storeImagesData(data) {
         id,
         chapterUrl,
         images,
-
     } = data
 
 
     for (const content of images) {
-
         const {
             imageUrl,
             pageNumber,

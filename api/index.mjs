@@ -77,11 +77,11 @@ app.get('/api/browse/:page', async (req, res) => {
         console.log('currently on page', pageNo);
 
         const url = `${baseURL}browse?page=${pageNo}`;
-        const response = await axios.get(url, {            
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36',
-                    'Referer': 'https://mangapark.net/',
-                },
+        const response = await axios.get(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36',
+                'Referer': 'https://mangapark.net/',
+            },
         }).catch((err) => {
             console.log("error: ", err.message);
         });
@@ -146,12 +146,12 @@ app.get('/api/manga/:id/:titleid', async (req, res) => {
 
         console.log("Navigating to: ", url);
 
-        const response = await axios.get(url, {           
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36',
-                    'Referer': 'https://mangapark.net/',
-                },
-            
+        const response = await axios.get(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36',
+                'Referer': 'https://mangapark.net/',
+            },
+
         });
         const $ = cheerio.load(response.data);
 
@@ -161,7 +161,7 @@ app.get('/api/manga/:id/:titleid', async (req, res) => {
 
             // Extract the chapter ID from the src URL
             const src = srcElement.attr('href');
-            const chapterId = src ? src.split('/').slice(-1)[0].split('-')[0] : null;
+            const chapterId = src ? src.split('/').slice(-1)[0] : null;
 
             return {
                 src,
@@ -254,59 +254,59 @@ app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
 
 app.get("/api/home", (req, res) => {
     let info = {
-      browse: { recipe: `${hostURL}/api/browse/:page`, test: `${hostURL}/api/browse/2` },
-      manga: { recipe: `${hostURL}/api/manga/:id/:titleid`, test: `${hostURL}/api/manga/75577/solo-leveling` },
-      mangaChapter: { recipe: `${hostURL}/api/manga/:id/:titleid/:chapterid`, test: `${hostURL}/api/manga/75577/solo-leveling/c197` },
-      docs: { recipe: `${hostURL}/api/docs`, test: `${hostURL}/api/docs` }
+        browse: { recipe: `${hostURL}/api/browse/:page`, test: `${hostURL}/api/browse/2` },
+        manga: { recipe: `${hostURL}/api/manga/:id/:titleid`, test: `${hostURL}/api/manga/75577/solo-leveling` },
+        mangaChapter: { recipe: `${hostURL}/api/manga/:id/:titleid/:chapterid`, test: `${hostURL}/api/manga/75577/solo-leveling/c197` },
+        docs: { recipe: `${hostURL}/api/docs`, test: `${hostURL}/api/docs` }
     };
     res.send(info);
-  });
-  
-  app.get("/api/docs", (req, res) => {
+});
+
+app.get("/api/docs", (req, res) => {
     const welcomeMessage = "Welcome to AnimeVariant API!";
     const apiInfo = {
-      version: "1.0.0",
-      author: "Valiantlynx",
-      description: "An API for accessing anime information and resources.",
-      endpoints: [
-        {
-          path: "/api/home",
-          description: "Get information about available API endpoints. They are also listed here.",
-          params: {}
-        },
-        {
-          path: "/api/browse/:page",
-          description: "Get a list of manga titles. The page parameter is optional and defaults to 1.",
-          params: {
-            page: "The page number to get manga titles from."
-          }
-        },
-        {
-          path: "/api/manga/:id/:titleid",
-          description: "Get a list of chapters for a manga title.",
-          params: {
-            id: "The ID of the manga title.",
-            titleid: "The title ID of the manga title."
-          }
-        },
-        {
-          path: "/api/manga/:id/:titleid/:chapterid",
-          description: "Get a list of images for a manga chapter.",
-          params: {
-            id: "The ID of the manga title.",
-            titleid: "The title ID of the manga title.",
-            chapterid: "The chapter ID of the manga chapter."
-          }
-        },
-      ],
+        version: "1.0.0",
+        author: "Valiantlynx",
+        description: "An API for accessing anime information and resources.",
+        endpoints: [
+            {
+                path: "/api/home",
+                description: "Get information about available API endpoints. They are also listed here.",
+                params: {}
+            },
+            {
+                path: "/api/browse/:page",
+                description: "Get a list of manga titles. The page parameter is optional and defaults to 1.",
+                params: {
+                    page: "The page number to get manga titles from."
+                }
+            },
+            {
+                path: "/api/manga/:id/:titleid",
+                description: "Get a list of chapters for a manga title.",
+                params: {
+                    id: "The ID of the manga title.",
+                    titleid: "The title ID of the manga title."
+                }
+            },
+            {
+                path: "/api/manga/:id/:titleid/:chapterid",
+                description: "Get a list of images for a manga chapter.",
+                params: {
+                    id: "The ID of the manga title.",
+                    titleid: "The title ID of the manga title.",
+                    chapterid: "The chapter ID of the manga chapter."
+                }
+            },
+        ],
     };
-  
+
     const response = {
-      message: welcomeMessage,
-      api: apiInfo,
+        message: welcomeMessage,
+        api: apiInfo,
     };
-  
+
     res.send(response);
-  });
+});
 
 app.listen(port, () => console.log(`running on ${port}`));
