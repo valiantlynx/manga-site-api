@@ -144,13 +144,15 @@ export async function storeMangaData(data) {
             chapterTitle,
             titleid,
             id,
-            mangaUrl
+            mangaUrl,
+            chapterNumber
         } = content;
 
         // Store chapter data with IPFS information
         const chapterInfo = {
             chapterId,
             src,
+            chapterNumber,
             chapterTitle,
             titleid,
             id,
@@ -184,6 +186,7 @@ async function createChapterRecord(data) {
             title: data.chapterTitle ? data.chapterTitle : "",
             chapterId: data.chapterId ? data.chapterId : "",
             mangaUrl: data.mangaUrl ? data.mangaUrl : "",
+            chapterNumber: data.chapterNumber ? data.chapterNumber : 1,
         };
         // If data exists, return the existing record ID
         if (checkExistance.data.items.length > 0) {

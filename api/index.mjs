@@ -162,10 +162,12 @@ app.get('/api/manga/:id/:titleid', async (req, res) => {
             // Extract the chapter ID from the src URL
             const src = srcElement.attr('href');
             const chapterId = src ? src.split('/').slice(-1)[0] : null;
+            const chapterNumber = chapterId ? parseFloat(chapterId.match(/\d+(\.\d+)?/)[0]) : null;
 
             return {
                 src,
                 chapterId,
+                chapterNumber,
                 chapterTitle: srcElement.text(),
                 titleid,
                 id,
