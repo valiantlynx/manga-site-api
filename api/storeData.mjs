@@ -177,7 +177,14 @@ async function createChapterRecord(data) {
     try {
         // Check if the record already exists
         const checkExistance = await axios.get(`${pbURL}/api/collections/chapters/records?sort=&filter=id="${id}"`);
-
+        const chapterData = {
+            id: id ? id : "",
+            mangaId: hash ? hash : "",
+            src: src ? src : "",
+            title: data.chapterTitle ? data.chapterTitle : "",
+            chapterId: data.chapterId ? data.chapterId : "",
+            mangaUrl: data.mangaUrl ? data.mangaUrl : "",
+        };
         // If data exists, return the existing record ID
         if (checkExistance.data.items.length > 0) {
             console.log(`Chapter record with src "${src}" already exists with ID: ${checkExistance.data.items[0].id}`);
@@ -185,12 +192,7 @@ async function createChapterRecord(data) {
             return checkExistance.data.items[0].id;
         }
 
-        const chapterData = {
-            id: id ? id : "",
-            mangaId: hash ? hash : "",
-            src: src ? src : "",
-            title: data.chapterTitle ? data.chapterTitle : "",
-        };
+
         const response = await axios.post(`${pbURL}/api/collections/chapters/records`, chapterData);
         console.log(`Chapter record created with ID: ${response.data.id}`);
         return response.data.id;
@@ -285,19 +287,16 @@ async function createImagesRecord(data) {
     const titleidHash = generateHash(`${baseURL}/comic/${data.id}/${data.titleid}`);
     const id = generateHash(data.imageUrl);
 
-    console.log("src", id, `${baseURL}/comic/${data.id}/${data.titleid}/${data.chapterid}`, `${baseURL}/comic/${data.id}/${data.titleid}`);
+    console.log(
+        "src", id,
+        `${baseURL}/comic/${data.id}/${data.titleid}/${data.chapterid}`,
+        chapteridHash,
+        `${baseURL}/comic/${data.id}/${data.titleid}`
+    );
 
     try {
         // Check if the record already exists
         const checkExistance = await axios.get(`${pbURL}/api/collections/images/records?sort=&filter=id="${id}"`);
-
-        // If data exists, return the existing record ID
-        if (checkExistance.data.items.length > 0) {
-            console.log(`Images record with src "${data.imageUrl}" already exists with ID: ${checkExistance.data.items[0].id}`);
-            const response = await axios.patch(`${pbURL}/api/collections/images/records/${checkExistance.data.items[0].id}`, imagesData);
-            return checkExistance.data.items[0].id;
-        }
-
         const imagesData = {
             id: id ? id : "",
             imageUrl: data.imageUrl ? data.imageUrl : "",
@@ -305,6 +304,7 @@ async function createImagesRecord(data) {
             totalPages: data.totalPages ? data.totalPages : 0,
             pageNumber: data.pageNumber ? data.pageNumber : 0,
             chapterId: chapteridHash ? chapteridHash : "",
+            chapter: data.chapterid ? data.chapterid : "",
             titleId: titleidHash ? titleidHash : "",
             chapterUrl: data.chapterUrl ? data.chapterUrl : "",
             cid: data.cid ? data.cid : "",
@@ -312,6 +312,12 @@ async function createImagesRecord(data) {
             isPinned: data.isPinned ? data.isPinned : false,
             img: data.img ? data.img : "",
         };
+        // If data exists, return the existing record ID
+        if (checkExistance.data.items.length > 0) {
+            console.log(`Images record with src "${data.imageUrl}" already exists with ID: ${checkExistance.data.items[0].id}`);
+            const response = await axios.patch(`${pbURL}/api/collections/images/records/${checkExistance.data.items[0].id}`, imagesData);
+            return checkExistance.data.items[0].id;
+        }
 
         const response = await axios.post(`${pbURL}/api/collections/images/records`, imagesData);
         console.log(`Images record created with ID: ${response.data.id}`);
