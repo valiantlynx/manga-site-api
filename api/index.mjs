@@ -125,7 +125,6 @@ app.get('/api/browse/:page', async (req, res) => {
         res.json({
             page: pageNo,
             mangas: scrapedData,
-
         });
 
     } catch (error) {
@@ -254,6 +253,7 @@ app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
     }
 });
 
+
 app.get("/api/home", (req, res) => {
     let info = {
         browse: { recipe: `${hostURL}/api/browse/:page`, test: `${hostURL}/api/browse/2` },
@@ -310,5 +310,74 @@ app.get("/api/docs", (req, res) => {
 
     res.send(response);
 });
+
+// word is any word, page is an integer
+app.get("/api/search/:word/:page", async (req, res) => {
+    let results = [];
+    var word = req.params.word;
+    let page = req.params.page;
+
+    if (isNaN(page)) {
+        return res.status(404).json({ results });
+    }
+
+    console.log("searching for: ", word, " on page: ", page);
+    
+    let url = `${baseURL}search?word=${word}&page=${req.params.page}`;
+    console.log("url: ", url);
+
+    try {
+        const { data: html } = await axios.get(url);
+       
+        const $ = cheerio.load(html);
+   
+        const scrapedData = [];
+
+        $('.pb-3').each((index, element) => {
+            const titleElement = $(element).find('.fw-bold');
+            const imgElement = $(element).find('img');
+            const tagsElement = $(element).find('.genres');
+            const chaptersElement = $(element).find('.text-ellipsis-1');
+            const srcElement = $(element).find('a');
+            const descriptionElement = $(element).find('.limit-html');
+            const authorElement = $(element).find('.autarts');
+
+            // Extract the ID and title ID from the src URL
+            const src = srcElement.attr('href');
+            const id = src ? src.split('/').slice(-2, -1)[0] : null;
+            const titleId = src ? src.split('/').slice(-1)[0] : null;
+
+            const content = {
+                title: titleElement.text().trim(),
+                img: imgElement.attr('src'),
+                tags: tagsElement.text(),
+                latestChapter: chaptersElement.text(),
+                src,
+                mangaParkId: id,
+                titleId,
+                description: descriptionElement.text(),
+                author: authorElement.length
+                    ? [authorElement.text(), authorElement.find('a').attr('href')]
+                    : null,
+            };
+
+            scrapedData.push(content);
+        });
+
+        storeMangasData(scrapedData);
+
+        res.json({
+            page,
+            mangas: scrapedData,
+        });
+    } catch (error) {
+        console.error('Scraping failed', error);
+        res.status(500).json({
+            error: error.message,
+            failure: error
+        });
+    }
+});
+
 
 app.listen(port, () => console.log(`running on ${port}`));
