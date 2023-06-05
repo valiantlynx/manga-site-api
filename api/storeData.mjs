@@ -97,16 +97,6 @@ async function createMangaRecord(data) {
     const id = hash
 
     try {
-        // Check if the record already exists
-        const checkExistance = await axios.get(`${pbURL}/api/collections/manga/records?sort=&filter=title="${data.title}"`);
-
-        // If data exists, return the existing record ID
-        if (checkExistance.data.items.length > 0) {
-            console.log(`Manga record with title "${data.title}" already exists with ID: ${checkExistance.data.items[0].id} and name: ${checkExistance.data.items[0].title}`);
-            const response = await axios.patch(`${pbURL}/api/collections/manga/records/${checkExistance.data.items[0].id}`, mangaData);
-            return checkExistance.data.items[0].id;
-        }
-        console.log("data.img", data.img);
         const mangaData = {
             "id": id ? id : "",
             "title": data.title ? data.title : "",
@@ -120,7 +110,19 @@ async function createMangaRecord(data) {
             "imageCid": data.cid ? data.cid : "",
             "isPinned": data.isPinned ? data.isPinned : false,
             "mangaParkId": data.mangaParkId ? data.mangaParkId : ""
+        };
+        
+        // Check if the record already exists
+        const checkExistance = await axios.get(`${pbURL}/api/collections/manga/records?sort=&filter=title="${data.title}"`);
+
+        // If data exists, return the existing record ID
+        if (checkExistance.data.items.length > 0) {
+            console.log(`Manga record with title "${data.title}" already exists with ID: ${checkExistance.data.items[0].id} and name: ${checkExistance.data.items[0].title}`);
+            const response = await axios.patch(`${pbURL}/api/collections/manga/records/${checkExistance.data.items[0].id}`, mangaData);
+            return checkExistance.data.items[0].id;
         }
+        console.log("data.img", data.img);
+ 
         const response = await axios.post(`${pbURL}/api/collections/manga/records`, mangaData);
 
         console.log(`Manga record created with ID: ${response.data.id}`);
