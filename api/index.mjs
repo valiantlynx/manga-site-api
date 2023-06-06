@@ -14,7 +14,7 @@ dotenv.config();
 const ipfs = create(process.env.IPFS_URL)
 const app = express();
 
-const port = process.env.PORT;
+const port = `0.0.0.0:${process.env.PORT}`;
 const hostURL = process.env.HOST_URL
 
 app.use(cors());
