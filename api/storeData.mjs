@@ -94,9 +94,6 @@ export async function storeMangasData(scrapedData) {
             console.log('Error fetching image:', error);
             // Handle the error or log an error message
         }
-
-
-
     }
     console.log('Finished storing manga data');
     return { ipfsFiles, mangaData };
@@ -173,8 +170,14 @@ export async function storeMangaData(data) {
         };
         chapterData.push("chapterInfo", chapterInfo);
 
-        // store chapter data to database
-        await createChapterRecord(chapterInfo);
+        try {
+            // store chapter data to database
+            await createChapterRecord(chapterInfo);
+
+        } catch (error) {
+            console.error('Error storing chapter data:', error);
+            // Handle the error or log an error message
+        }
 
     }
     console.log('Finished storing chapter data');
@@ -242,55 +245,62 @@ export async function storeImagesData(data) {
 
         console.log('Fetching image', imageUrl);
 
-        // Fetch the image data
-        const imageResponse = await axios.get(imageUrl, {
-            responseType: 'arraybuffer',
-        });
+        try {
+            // Fetch the image data
+            const imageResponse = await axios.get(imageUrl, {
+                responseType: 'arraybuffer',
+            });
 
-        // Add the image data to IPFS
-        const imageBuffer = Buffer.from(imageResponse.data);
-        const ipfsFile = await ipfs.add(imageBuffer);
+            // Add the image data to IPFS
+            const imageBuffer = Buffer.from(imageResponse.data);
+            const ipfsFile = await ipfs.add(imageBuffer);
 
-        // Pin the added image
-        const pinned = await ipfs.pin.add(ipfsFile.cid);
-        const pinList = await ipfs.pin.ls();
+            // Pin the added image
+            const pinned = await ipfs.pin.add(ipfsFile.cid);
+            const pinList = await ipfs.pin.ls();
 
-        let isPinned = false
-        for await (const pin of pinList) {
-            if (pin.cid.toString() === ipfsFile.cid.toString()) {
-                isPinned = true
+            let isPinned = false
+            for await (const pin of pinList) {
+                if (pin.cid.toString() === ipfsFile.cid.toString()) {
+                    isPinned = true
+                }
             }
+
+            ipfsFiles.push(ipfsFile);
+
+            // Store chapter data with IPFS information
+            const imagesInfo = {
+                cid: ipfsFile.cid.toString(), // Store the CID as a string
+                size: ipfsFile.size,
+                img: `${hostURL}/ipfs/${ipfsFile.cid.toString()}`,
+                isPinned,
+                imageUrl,
+                pageNumber,
+                totalPages,
+                chapterText,
+                id,
+                titleid,
+                chapterid,
+                chapterUrl
+            };
+            imagesData.push("imagesInfo", imagesInfo);
+
+            console.log('Added image to IPFS', imagesInfo.imageUrl);
+
+            // Add the image to IPFS MFS with the title as the filename
+            const mfsPath = `/images/${titleid}/${chapterid}/${pageNumber}.png`; // Customize the path and file extension as needed
+            await ipfs.files.write(mfsPath, imageBuffer, { create: true, parents: true });
+            console.log('Added image to IPFS MFS', mfsPath);
+
+
+            // store chapter data to database
+            await createImagesRecord(imagesInfo);
+        } catch (error) {
+            console.error('Error fetching image:', error);
+            // Handle the error or log an error message
         }
 
-        ipfsFiles.push(ipfsFile);
 
-        // Store chapter data with IPFS information
-        const imagesInfo = {
-            cid: ipfsFile.cid.toString(), // Store the CID as a string
-            size: ipfsFile.size,
-            img: `${hostURL}/ipfs/${ipfsFile.cid.toString()}`,
-            isPinned,
-            imageUrl,
-            pageNumber,
-            totalPages,
-            chapterText,
-            id,
-            titleid,
-            chapterid,
-            chapterUrl
-        };
-        imagesData.push("imagesInfo", imagesInfo);
-
-        console.log('Added image to IPFS', imagesInfo.imageUrl);
-
-        // Add the image to IPFS MFS with the title as the filename
-        const mfsPath = `/images/${titleid}/${chapterid}/${pageNumber}.png`; // Customize the path and file extension as needed
-        await ipfs.files.write(mfsPath, imageBuffer, { create: true, parents: true });
-        console.log('Added image to IPFS MFS', mfsPath);
-
-
-        // store chapter data to database
-        await createImagesRecord(imagesInfo);
     }
     console.log('Finished storing images data');
     return { ipfsFiles, imagesData };
