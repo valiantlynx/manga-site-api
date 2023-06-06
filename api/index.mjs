@@ -312,10 +312,11 @@ app.get("/api/docs", (req, res) => {
 });
 
 // word is any word, page is an integer
-app.get("/api/search/:word/:page", async (req, res) => {
+app.get("/api/search/:word/:page/:action", async (req, res) => {
     let results = [];
     var word = req.params.word;
     let page = req.params.page;
+    let action = req.params.action;
 
     if (isNaN(page)) {
         return res.status(404).json({ results });
@@ -364,8 +365,11 @@ app.get("/api/search/:word/:page", async (req, res) => {
             scrapedData.push(content);
         });
 
-        storeMangasData(scrapedData);
-
+        // check if "see" or to "populate". if see, do nothing just continue, if populate, run storeMangasData(scrapedData);
+        if (action === "populate") {
+            storeMangasData(scrapedData);
+        }
+        
         res.json({
             page,
             mangas: scrapedData,
