@@ -33,58 +33,69 @@ export async function storeMangasData(scrapedData) {
 
         console.log('Fetching image', img);
 
-        // Fetch the image data
-        const imageResponse = await axios.get(img, {
-            responseType: 'arraybuffer',
-            headers: {
-                'Content-Type': 'image/png',
-            },
-        });
+        try {
 
-        // Add the image data to IPFS
-        const imageBuffer = Buffer.from(imageResponse.data);
-        console.log('Adding image to IPFS');
-        const ipfsFile = await ipfs.add(imageBuffer);
+            // Fetch the image data
+            const imageResponse = await axios.get(img, {
+                responseType: 'arraybuffer',
+                headers: {
+                    'Content-Type': 'image/png',
+                },
+            });
 
-        // Pin the added image
-        const pinned = await ipfs.pin.add(ipfsFile.cid);
-        const pinList = await ipfs.pin.ls();
 
-        let isPinned = false
-        for await (const pin of pinList) {
-            if (pin.cid.toString() === ipfsFile.cid.toString()) {
-                isPinned = true
+
+            // Add the image data to IPFS
+            const imageBuffer = Buffer.from(imageResponse.data);
+            console.log('Adding image to IPFS');
+            const ipfsFile = await ipfs.add(imageBuffer);
+
+            // Pin the added image
+            const pinned = await ipfs.pin.add(ipfsFile.cid);
+            const pinList = await ipfs.pin.ls();
+
+            let isPinned = false
+            for await (const pin of pinList) {
+                if (pin.cid.toString() === ipfsFile.cid.toString()) {
+                    isPinned = true
+                }
             }
+
+            ipfsFiles.push(ipfsFile);
+
+            // Store manga data with IPFS information
+            const mangaInfo = {
+                title,
+                cid: ipfsFile.cid.toString(), // Store the CID as a string
+                size: ipfsFile.size,
+                img: `${hostURL}/ipfs/${ipfsFile.cid.toString()}`,
+                isPinned,
+                tags,
+                latestChapter,
+                src,
+                description,
+                author,
+                titleId,
+                mangaParkId
+            };
+            mangaData.push("mangaInfo", mangaInfo);
+
+            console.log('Added image to IPFS', mangaInfo.img);
+
+            // Add the image to IPFS MFS with the title as the filename
+            const mfsPath = `/images/${titleId}/${titleId}.png`; // Customize the path and file extension as needed
+            await ipfs.files.write(mfsPath, imageBuffer, { create: true, parents: true });
+            console.log('Added image to IPFS MFS', mfsPath);
+
+            // store manga data to database
+            const mangaId = await createMangaRecord(mangaInfo);
+
+        } catch (error) {
+            console.log('Error fetching image:', error);
+            // Handle the error or log an error message
         }
 
-        ipfsFiles.push(ipfsFile);
 
-        // Store manga data with IPFS information
-        const mangaInfo = {
-            title,
-            cid: ipfsFile.cid.toString(), // Store the CID as a string
-            size: ipfsFile.size,
-            img: `${hostURL}/ipfs/${ipfsFile.cid.toString()}`,
-            isPinned,
-            tags,
-            latestChapter,
-            src,
-            description,
-            author,
-            titleId,
-            mangaParkId
-        };
-        mangaData.push("mangaInfo", mangaInfo);
-
-        console.log('Added image to IPFS', mangaInfo.img);
-
-        // Add the image to IPFS MFS with the title as the filename
-        const mfsPath = `/images/${titleId}/${titleId}.png`; // Customize the path and file extension as needed
-        await ipfs.files.write(mfsPath, imageBuffer, { create: true, parents: true });
-        console.log('Added image to IPFS MFS', mfsPath);
-
-        // store manga data to database
-        const mangaId = await createMangaRecord(mangaInfo);
 
     }
     console.log('Finished storing manga data');
@@ -111,7 +122,7 @@ async function createMangaRecord(data) {
             "isPinned": data.isPinned ? data.isPinned : false,
             "mangaParkId": data.mangaParkId ? data.mangaParkId : ""
         };
-        
+
         // Check if the record already exists
         const checkExistance = await axios.get(`${pbURL}/api/collections/manga/records?sort=&filter=title="${data.title}"`);
 
@@ -122,7 +133,7 @@ async function createMangaRecord(data) {
             return checkExistance.data.items[0].id;
         }
         console.log("data.img", data.img);
- 
+
         const response = await axios.post(`${pbURL}/api/collections/manga/records`, mangaData);
 
         console.log(`Manga record created with ID: ${response.data.id}`);
