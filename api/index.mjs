@@ -13,8 +13,8 @@ import { setupPuppeteer } from './puppeteer.mjs';
 dotenv.config();
 const ipfs = create(process.env.IPFS_URL)
 const app = express();
-
-const port = `0.0.0.0:${process.env.PORT}`;
+const host = '0.0.0.0';
+const port = process.env.PORT || 3000;
 const hostURL = process.env.HOST_URL
 
 app.use(cors());
@@ -322,15 +322,15 @@ app.get("/api/search/:word/:page", async (req, res) => {
     }
 
     console.log("searching for: ", word, " on page: ", page);
-    
+
     let url = `${baseURL}search?word=${word}&page=${req.params.page}`;
     console.log("url: ", url);
 
     try {
         const { data: html } = await axios.get(url);
-       
+
         const $ = cheerio.load(html);
-   
+
         const scrapedData = [];
 
         $('.pb-3').each((index, element) => {
@@ -380,4 +380,6 @@ app.get("/api/search/:word/:page", async (req, res) => {
 });
 
 
-app.listen(port, () => console.log(`running on ${port}`));
+app.listen(port, host, () => {
+    console.log(`Server is running on ${host}:${port}`);
+});
