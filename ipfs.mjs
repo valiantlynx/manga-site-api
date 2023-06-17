@@ -50,7 +50,8 @@ async function main() {
     }
     console.log("ls data", data.cid.toString(), "type", data.type)
   }
-  
+
+  // publish files
   await node.name.publish(file.cid.toString(), { resolve: false }).then((res) => {
     console.log("published ", res)
   })
