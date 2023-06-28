@@ -22,7 +22,7 @@ app.use(cors());
 const baseURL = "https://mangapark.net/";
 
 app.get('/', async (req, res) => {
-    const page = req.query.page || 100;
+    const page = req.query.page || 1;
 
     const resultList = await axios.get(`${url}/api/collections/manga/records?page=${page}`, {
         headers: {
