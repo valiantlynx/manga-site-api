@@ -1,4 +1,4 @@
-FROM node:alpine
+FROM node:alpine as builder
 
 # Install necessary dependencies
 RUN apk update && apk upgrade && \
