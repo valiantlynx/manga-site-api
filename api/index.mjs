@@ -78,7 +78,6 @@ app.get('/ipfs/:cid', async (req, res) => {
 
 app.get('/api/browse/:page', async (req, res) => {
     let pageNo = req.params.page;
-
     try {
         console.log('currently on page', pageNo);
 
