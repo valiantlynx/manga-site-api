@@ -22,6 +22,10 @@ app.use(cors());
 const baseURL = "https://mangapark.net/";
 
 app.get('/', async (req, res) => {
+    res.send("hello!");
+});
+
+app.get('/test', async (req, res) => {
     const page = req.query.page || 1;
 
     const resultList = await axios.get(`${url}/api/collections/manga/records?page=${page}`, {
@@ -45,8 +49,10 @@ app.get('/ipfs/:cid', async (req, res) => {
     console.log("recived cid: ", cid, " from: ", req.ip);
     try {
         const chunks = [];
+        var chunkNo = 0;
+        console.log("getting cid: ", cid);
         for await (const chunk of ipfs.cat(cid)) {
-
+            console.log("chunk: ", chunkNo++);
             chunks.push(chunk);
         }
         const data = Buffer.concat(chunks);
