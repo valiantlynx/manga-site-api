@@ -5,6 +5,7 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const puppeteer = require("puppeteer");
 
+
 const port = process.env.PORT || 3000;
 const hostURL = process.env.HOST_URL;
 const browserlessURL = process.env.BROWSERLESS_URL;
@@ -167,12 +168,12 @@ app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
     console.log("Navigating to: ", url);
     const endpoint = browserlessURL;
 
-    const browser = await puppeteer.connect({
-      browserWSEndpoint: endpoint,
-    });
-    // const browser = await puppeteer.launch({ headless: "false" });
+    // const browser = await puppeteer.connect({
+    //   browserWSEndpoint: endpoint,
+    // });
+     const browser = await puppeteer.launch({ headless: "false" });
     const page = await browser.newPage();
-    await page.setDefaultNavigationTimeout(2 * 60 * 1000);
+    page.setDefaultNavigationTimeout(2 * 60 * 1000);
 
 
     await page.goto(url);
