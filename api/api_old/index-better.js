@@ -359,6 +359,151 @@ app.get('/api/chapmangato/:id/:chapterid', async (req, res) => {
 });
 
 
+
+// manganelo
+const baseURL_manganelo = "https://ww6.manganelo.tv/";
+
+app.get('/api/manganelo/browse/:page', async (req, res) => {
+  console("called manganelo")
+  let pageNo = req.params.page;
+  try {
+    console.log('currently on page', pageNo);
+
+    const url = `${baseURL_manganelo}genre?page=${pageNo}`;
+    const response = await axios.get(url).catch((err) => {
+      console.log("error: ", err.message, err.response, err.response.data, err.data, err.status);
+    });
+    const $ = cheerio.load(response.data);
+
+    const scrapedData = [];
+
+    $('.content-genres-item').each((index, element) => {
+      const titleElement = $(element).find('.genres-item-name');
+      const imgElement = $(element).find('img');
+      const chaptersElement = $(element).find('.genres-item-chap');
+      const srcElement = $(element).find('a');
+      const descriptionElement = $(element).find('.genres-item-description');
+      const authorElement = $(element).find('.genres-item-author');
+
+      // Extract the ID and title ID from the src URL
+      const src = srcElement.attr('href');
+      const id = src ? src.split('/').slice(-1)[0] : null;
+      const titleId = titleElement.text()
+
+      const content = {
+        title: titleElement.text(),
+        img: imgElement.attr('src'),
+        latestChapter: chaptersElement.text(),
+        src,
+        id,
+        titleId,
+        description: descriptionElement.text(),
+        author: authorElement.length
+          ? [authorElement.text(), authorElement.find('a').attr('href')]
+          : null,
+      };
+      scrapedData.push(content);
+    });
+
+    res.json({
+      page: pageNo,
+      mangas: scrapedData,
+    });
+  } catch (error) {
+    console.error('Scraping failed', error.message);
+    res.status(500).json({
+      error: error.message,
+      failure: error
+    });
+  }
+});
+
+app.get('/api/manganelo/:id', async (req, res) => {
+  console.log("called manganello")
+  let id = req.params.id;
+
+  try {
+    const url = `${baseURL_manganelo}manga/${id}`;
+
+    console.log("Navigating to: ", url);
+
+    const response = await axios.get(url, {
+      headers: {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
+          'Referer': `${baseURL_manganelo}`,
+        },
+      }
+    });
+    const $ = cheerio.load(response.data);
+
+    const elements = $('.chapter-name');
+const data = elements.map((index, element) => {
+  const src = $(element).attr('href');
+  const chapterId = src ? src.split('/').slice(-1)[0] : null;
+
+  return {
+    src,
+    chapterId,
+    chapterTitle: $(element).text(),
+  };
+}).get();
+
+    res.json({ episodes: data });
+  } catch (error) {
+    console.error('Scraping failed', error.message);
+    res.status(500).json({
+      error: error.message,
+      failure: error
+    });
+  }
+});
+
+app.get('/api/manganelo/:id/:chapterid', async (req, res) => {
+  console.log("called manganello")
+  let id = req.params.id;
+  let chapterid = req.params.chapterid;
+  try {
+    const url = `${baseURL_manganelo}chapter/${id}/${chapterid}`;
+
+    console.log("Navigating to: ", url);
+
+    const response = await axios.get(url, {
+      headers: {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36',
+          'Referer': `${baseURL_manganelo}`,
+        },
+      }
+    });
+    const $ = cheerio.load(response.data);
+
+    const elements = $('.container-chapter-reader img');
+
+    const data = elements.map((index, element) => {
+      const imageUrl = $(element).attr('data-src');
+      const pageNumber = index + 1;
+      const totalPages = elements.length;
+
+      console.log("Image URL:", imageUrl);
+      console.log("Page Number:", pageNumber);
+      console.log("Total Pages:", totalPages);
+
+      return {
+        imageUrl,
+        pageNumber,
+        totalPages,
+      };
+    }).get();
+
+    res.json({ images: data });
+  } catch (error) {
+    console.error('Scraping failed', error);
+    res.status(500).send('Scraping failed');
+  }
+});
+
+
 // all
 app.get("/api/home", (req, res) => {
   let info = {
