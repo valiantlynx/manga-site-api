@@ -171,7 +171,7 @@ app.get('/api/manga/:id/:titleid/:chapterid', async (req, res) => {
     // const browser = await puppeteer.connect({
     //   browserWSEndpoint: endpoint,
     // });
-     const browser = await puppeteer.launch({ headless: "false" });
+     const browser = await puppeteer.launch({ headless: "true" });
     const page = await browser.newPage();
     page.setDefaultNavigationTimeout(2 * 60 * 1000);
 
