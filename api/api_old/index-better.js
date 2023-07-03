@@ -364,7 +364,7 @@ app.get('/api/chapmangato/:id/:chapterid', async (req, res) => {
 const baseURL_manganelo = "https://ww6.manganelo.tv/";
 
 app.get('/api/manganelo/browse/:page', async (req, res) => {
-  console("called manganelo")
+  console.log("called manganelo")
   let pageNo = req.params.page;
   try {
     console.log('currently on page', pageNo);
