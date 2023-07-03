@@ -2,6 +2,7 @@
 you have to set a simple pocketbase on port 8080. make sure to make three collections named manga, chapters, and images
 
 this is their structure:
+
 ```javascript
 manga:
 {
