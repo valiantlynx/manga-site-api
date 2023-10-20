@@ -4,7 +4,7 @@
   "description": "",
   "main": "api/index.mjs",
   "scripts": {
-    "start": "nodemon api/index.mjs",
+    "start": "nodemon api/api_old/index-better.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -21,7 +21,7 @@
     "nodemon": "^2.0.22",
     "pocketbase": "^0.14.3",
     "puppeteer": "^19.11.1",
-    "request": "^2.88.2",
+    "uuid": "9.0.0",
     "sharp": "^0.32.1"
   }
 }
