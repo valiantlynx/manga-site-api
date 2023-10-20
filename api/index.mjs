@@ -8,6 +8,7 @@ import axios from 'axios';
 import cheerio from 'cheerio';
 import { create } from 'ipfs-http-client';
 import { storeMangasData, storeMangaData, storeImagesData } from './storeData.mjs';
+import { downloadManga, downloadCheerioChapter } from './downloadData.mjs';
 import { setupPuppeteer } from './puppeteer.mjs';
 
 dotenv.config();
@@ -122,10 +123,17 @@ app.get('/api/browse/:page', async (req, res) => {
 
         storeMangasData(scrapedData);
 
+  
+        scrapedData.forEach(async (data) => {
+            downloadManga(data);
+        });
+
         res.json({
             page: pageNo,
             mangas: scrapedData,
         });
+
+      
 
     } catch (error) {
         console.error('Scraping failed', error.message);
@@ -175,8 +183,15 @@ app.get('/api/manga/:id/:titleid', async (req, res) => {
         }).get();
 
         storeMangaData(data);
+        
+        for (const chapter of data) {
+            downloadCheerioChapter(chapter);
+        }
 
         res.json({ episodes: data });
+
+     
+
     } catch (error) {
         console.error('Scraping failed', error.message);
         res.status(500).json({
