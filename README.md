@@ -40,4 +40,11 @@ images:
 3. run `npm start`
 
 # How to use the api
-1. go to `localhost:8080/_/` the api is pocketbases api so you can use it like that 
+1. go to `localhost:8080/_/` the api is pocketbases api so you can use it like that
+
+   ### adding new projects with their own git history
+```sh
+git subtree add --prefix=apps/manga-site-api https://github.com/valiantlynx/manga-site-api.git master --squash
+git subtree pull --prefix=apps/manga-site-api https://github.com/valiantlynx/manga-site-api.git master --squash
+git subtree push --prefix=apps/manga-site-api https://github.com/valiantlynx/manga-site-api.git master
+```
