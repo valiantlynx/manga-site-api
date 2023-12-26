@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "api/index.mjs",
+  "private": true,
   "scripts": {
     "start": "nodemon api/api_old/index-better.js",
     "test": "echo \"Error: no test specified\" && exit 1"
