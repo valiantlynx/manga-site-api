@@ -1,50 +1,40 @@
-# Use Node.js 18 Alpine as the base image for smaller footprint
 FROM node:18-alpine AS base
 
-# Install necessary system dependencies including Chromium
-RUN apk --no-cache add \
-    curl \
-    chromium \
-    nss \
-    freetype \
-    freetype-dev \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
-    nodejs \
-    yarn && \
-    apk add --no-cache libc6-compat && \
-    apk update && \
-    yarn global add turbo
+# This Dockerfile is copy-pasted into our main docs at /docs/handbook/deploying-with-docker.
+# Make sure you update both files!
 
-# Set environment variables for Puppeteer
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
-ENV PUPPETEER_EXECUTABLE_PATH /usr/bin/chromium-browser
-ENV CHROME_BIN /usr/bin/chromium-browser
-
+FROM base AS builder
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk add --no-cache libc6-compat curl chromium  && \
+    rm -rf /var/cache/apk/*
+RUN apk update
 # Set working directory
 WORKDIR /app
-
-# Copy necessary files to run Turbo and install dependencies
-COPY yarn.lock turbo.json ./
-
-# Optional: Copy any global configs or scripts needed
-# COPY .npmrc ./
-
-# Isolate the necessary files for the specific workspace using turbo prune
+RUN yarn global add turbo
 COPY . .
 RUN turbo prune manga-site-api --docker
 
-# Final image to install dependencies and run the service
-FROM base AS release
 
-# Install dependencies
+# Add lockfile and package.json's of isolated subworkspace
+FROM base AS installer
+RUN apk add --no-cache libc6-compat curl chromium  && \
+    rm -rf /var/cache/apk/*
+RUN apk update
 WORKDIR /app
-COPY --from=base /app/out/ .
-RUN yarn install
 
-# Expose the desired port, adjust if different from 3000
+# Set environment variables
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+ENV CHROME_BIN=/usr/bin/chromium
+
+# First install the dependencies (as they change less often)
+COPY .gitignore .gitignore
+COPY --from=builder /app/out/json/ .
+COPY --from=builder /app/out/yarn.lock ./yarn.lock
+COPY turbo.json turbo.json
+
+RUN yarn install
+RUN yarn add nodemon -G -W 
+
 EXPOSE 3000
 
-# Start the application, adjust the command according to your specific start script
 CMD ["yarn", "start"]
